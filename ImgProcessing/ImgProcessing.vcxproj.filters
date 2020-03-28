@@ -30,12 +30,18 @@
     <ClCompile Include="DoubleMatrix.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="LabImage.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="IntMatrix.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="DoubleMatrix.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="LabImage.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
