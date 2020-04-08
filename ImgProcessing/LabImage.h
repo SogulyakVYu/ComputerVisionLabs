@@ -12,19 +12,19 @@ private:
 	int height;
 public:
 	LabImage(QImage& source);
-	// Вывод размера и формата изображения
+	// Р’С‹РІРѕРґ СЂР°Р·РјРµСЂР° Рё С„РѕСЂРјР°С‚Р° РёР·РѕР±СЂР°Р¶РµРЅРёСЏ
 	void printInfo();
-	// Возвращает копию изображения в оттенках серого
+	// Р’РѕР·РІСЂР°С‰Р°РµС‚ РєРѕРїРёСЋ РёР·РѕР±СЂР°Р¶РµРЅРёСЏ РІ РѕС‚С‚РµРЅРєР°С… СЃРµСЂРѕРіРѕ
 	QImage getGrayScale();
 
 	static IntMatrix createIntMatrixFromImage(QImage& source, char channel);
-	// Возвращает копию изображения в оттенках серого
+	// Р’РѕР·РІСЂР°С‰Р°РµС‚ РєРѕРїРёСЋ РёР·РѕР±СЂР°Р¶РµРЅРёСЏ РІ РѕС‚С‚РµРЅРєР°С… СЃРµСЂРѕРіРѕ
 	static QImage getGrayScale(QImage& source);
-	// Создает изображение из заданной матрицы 
+	// РЎРѕР·РґР°РµС‚ РёР·РѕР±СЂР°Р¶РµРЅРёРµ РёР· Р·Р°РґР°РЅРЅРѕР№ РјР°С‚СЂРёС†С‹ 
 	static QImage getImageFromMatrix(const IntMatrix& matrix);
 	static QImage getImageFromMatrix(const DoubleMatrix& matrix);
-	// Сохраняет изображение из заданной матрицы
-	static void saveImage(const IntMatrix& matrix, const QString& fileName);
-	static void saveImage(const DoubleMatrix& matrix, const QString& fileName);
+	// РЎРѕС…СЂР°РЅСЏРµС‚ РёР·РѕР±СЂР°Р¶РµРЅРёРµ РёР· Р·Р°РґР°РЅРЅРѕР№ РјР°С‚СЂРёС†С‹
+	static void saveImage(IntMatrix& matrix, const QString& fileName);
+	static void saveImage(DoubleMatrix& matrix, const QString& fileName);
 };
 

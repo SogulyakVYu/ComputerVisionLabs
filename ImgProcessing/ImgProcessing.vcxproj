@@ -84,11 +84,13 @@
     <ClCompile Include="IntMatrix.cpp" />
     <ClCompile Include="LabImage.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="Pyramid.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DoubleMatrix.h" />
     <ClInclude Include="IntMatrix.h" />
     <ClInclude Include="LabImage.h" />
+    <ClInclude Include="Pyramid.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Condition="Exists('$(QtMsBuild)\qt.targets')">

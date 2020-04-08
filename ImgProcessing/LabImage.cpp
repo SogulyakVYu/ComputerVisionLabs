@@ -106,12 +106,13 @@ QImage LabImage::getImageFromMatrix(const DoubleMatrix& matrix)
 	return resultImage;
 }
 
-void LabImage::saveImage(const IntMatrix& matrix, const QString& fileName)
+void LabImage::saveImage(IntMatrix& matrix, const QString& fileName)
 {
 	getImageFromMatrix(matrix).save(fileName);
 }
 
-void LabImage::saveImage(const DoubleMatrix& matrix, const QString& fileName)
+void LabImage::saveImage(DoubleMatrix& matrix, const QString& fileName)
 {
-	getImageFromMatrix(matrix).save(fileName);
+	DoubleMatrix m = DoubleMatrix(matrix);
+	getImageFromMatrix(m.normalize(0, 255)).save(fileName);
 }

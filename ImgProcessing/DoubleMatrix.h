@@ -40,26 +40,29 @@ private:
 	// ¬озвращает пиксель на позиции (i, j) изображени€ или "завернутый" край изображени€ 
 	double getWithWrapBorder(int i, int j) const;
 
-	// ¬озвращает пиксель на позиции (i, j)
-	double get_(int i, int j) const { return matrix[i * width + j]; }
-
 	// ¬озвращает размер (ширину) €дра фильтра гаусса по правилу полуразмер=3*sigma 
 	static int getGaussianSize(double sigma);
 public:
+	DoubleMatrix();
 	DoubleMatrix(int w, int h);
 	DoubleMatrix(const DoubleMatrix& other);
-	DoubleMatrix(const DoubleMatrix&& other);
+	DoubleMatrix(DoubleMatrix&& other) = default;
 	DoubleMatrix(std::vector<std::vector<double>> m);
 	DoubleMatrix(std::initializer_list<std::initializer_list<double>> arr);
 
 	int getWidth() const { return width; }
 	int getHeight() const { return height; }
 
+	DoubleMatrix& operator=(const DoubleMatrix& right);
+	DoubleMatrix& operator=(DoubleMatrix&& right) = default;
+
 	DoubleMatrix& fillMatrix(double val);
 	void set(int i, int j, double val);
 	void set(int i, double val);
 	// ¬озвращает пиксель на позиции (i, j) или заданый пиксель за границей изображени€
 	double get(int i, int j) const;
+	// ¬озвращает пиксель на позиции (i, j)
+	double at(int i, int j) const { return matrix[i * width + j]; }
 
 	// —вертка по строке
 	DoubleMatrix convolutionRow(const DoubleMatrix& other) const;
@@ -80,11 +83,14 @@ public:
 	// ¬озвращает производную по Y
 	DoubleMatrix dy();
 	DoubleMatrix add(double val);
-	DoubleMatrix add(const DoubleMatrix& val);
+	DoubleMatrix add(const DoubleMatrix& mat);
 	DoubleMatrix sub(double val);
-	DoubleMatrix sub(const DoubleMatrix& val);
+	DoubleMatrix sub(const DoubleMatrix& mat);
 	DoubleMatrix mul(double val);
-	DoubleMatrix mul(const DoubleMatrix& val);
+	DoubleMatrix mul(const DoubleMatrix& mat);
+	bool allClose(DoubleMatrix& other, double eps);
+	// ”меньшает размер изображени€ в два раза
+	DoubleMatrix downsample(int pow = 1);
 	void printMatrix() const;
 
 	// ”становка типа заполнени€ границ изображени€

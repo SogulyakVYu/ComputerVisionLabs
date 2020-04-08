@@ -72,9 +72,8 @@ void DoubleMatrix::copyWithBorder(const DoubleMatrix& src, DoubleMatrix* dest, i
 
 DoubleMatrix DoubleMatrix::convolutionRow(const DoubleMatrix& other) const
 {
-	int offsetH = other.height / 2;
+	int offsetH = 0;
 	int offsetW = other.width / 2;
-	int newSize = other.width * this->height;
 	DoubleMatrix result(this->width, this->height);
 
 	DoubleMatrix* tmp = new DoubleMatrix(this->width, this->height);
@@ -84,7 +83,7 @@ DoubleMatrix DoubleMatrix::convolutionRow(const DoubleMatrix& other) const
 		for (int j = offsetW; j < result.width + offsetW; j++) {
 			double sum = 0;
 			for (int v = -offsetW; v <= offsetW; v++) {
-				sum += tmp->get_(i, j - v) * other.get_(0, v + offsetW);
+				sum += tmp->at(i, j - v) * other.at(0, v + offsetW);
 			}
 			result.set(i - offsetH, j - offsetW, sum);
 		}
@@ -98,8 +97,7 @@ DoubleMatrix DoubleMatrix::convolutionRow(const DoubleMatrix& other) const
 DoubleMatrix DoubleMatrix::convolutionCol(const DoubleMatrix& other) const
 {
 	int offsetH = other.width / 2;
-	int offsetW = other.height / 2;
-	int newSize = other.width * this->height;
+	int offsetW = 0;
 	DoubleMatrix result(this->width, this->height);
 
 	DoubleMatrix* tmp = new DoubleMatrix(this->width, this->height);
@@ -109,7 +107,7 @@ DoubleMatrix DoubleMatrix::convolutionCol(const DoubleMatrix& other) const
 		for (int j = offsetW; j < result.width + offsetW; j++) {
 			double sum = 0;
 			for (int v = -offsetH; v <= offsetH; v++) {
-				sum += tmp->get_(i - v, j) * other.get_(0, v + offsetH);
+				sum += tmp->at(i - v, j) * other.at(0, v + offsetH);
 			}
 			result.set(i - offsetH, j - offsetW, sum);
 		}
@@ -121,9 +119,8 @@ DoubleMatrix DoubleMatrix::convolutionCol(const DoubleMatrix& other) const
 
 DoubleMatrix DoubleMatrix::convolution(const DoubleMatrix& other) const
 {
-	int offsetH = other.width / 2;
-	int offsetW = other.height / 2;
-	int newSize = other.width * this->height;
+	int offsetW = other.width / 2;
+	int offsetH = other.height / 2;
 	DoubleMatrix result(this->width, this->height);
 
 	DoubleMatrix* tmp = new DoubleMatrix(this->width, this->height);
@@ -137,8 +134,7 @@ DoubleMatrix DoubleMatrix::convolution(const DoubleMatrix& other) const
 				for (int v = -offsetW; v <= offsetW; v++) {
 					int curY = i - u;
 					int curX = j - v;
-					sum += tmp->get_(curY, curX) * other.get_(u + offsetH, v + offsetW);
-					//std::cout << "curY, curX=[" << curY << ", " << curX << "] j, i=[" << j << ", " << i << "] u, v=[" << u << ", " << v << "]" << std::endl;
+					sum += tmp->at(curY, curX) * other.at(u + offsetH, v + offsetW);
 				}
 			}
 
@@ -152,10 +148,12 @@ DoubleMatrix DoubleMatrix::convolution(const DoubleMatrix& other) const
 
 int DoubleMatrix::getGaussianSize(double sigma)
 {
-	int size = round(sigma) * 3 * 2;
+	int size = sigma * 3 * 2;
 	if (size % 2 == 0) size += 1;
 	return size;
 }
+
+DoubleMatrix::DoubleMatrix(): width(0), height(0), matrix(0) {}
 
 DoubleMatrix::DoubleMatrix(int w, int h): width(w), height(h)
 {
@@ -166,15 +164,6 @@ DoubleMatrix::DoubleMatrix(const DoubleMatrix& other): width(other.width), heigh
 {
 	matrix.resize(width * height);
 	
-	for (int i = 0; i < width * height; i++) {
-		matrix[i] = other.matrix[i];
-	}
-}
-
-DoubleMatrix::DoubleMatrix(const DoubleMatrix&& other): width(other.width), height(other.height)
-{
-	matrix.resize(width * height);
-
 	for (int i = 0; i < width * height; i++) {
 		matrix[i] = other.matrix[i];
 	}
@@ -206,6 +195,15 @@ DoubleMatrix::DoubleMatrix(std::initializer_list<std::initializer_list<double>> 
 			i++;
 		}
 	}
+}
+
+DoubleMatrix& DoubleMatrix::operator=(const DoubleMatrix& right)
+{
+	if (this == &right) return *this;
+	width = right.width;
+	height = right.height;
+	std::copy(begin(right.matrix), end(right.matrix), begin(this->matrix));
+	return *this;
 }
 
 DoubleMatrix& DoubleMatrix::fillMatrix(double val)
@@ -335,6 +333,30 @@ DoubleMatrix DoubleMatrix::mul(const DoubleMatrix& other)
 	return result;
 }
 
+bool DoubleMatrix::allClose(DoubleMatrix& other, double eps)
+{
+	DoubleMatrix subMatrix = this->sub(other);
+	auto minMaxIterator = std::minmax_element(begin(subMatrix.matrix), end(subMatrix.matrix));
+	double absMax = std::max(std::abs(*minMaxIterator.first), std::abs(*minMaxIterator.second));
+	//std::cout << "MAX=" << absMax << std::endl;
+	return absMax <= eps;
+}
+
+DoubleMatrix DoubleMatrix::downsample(int pow)
+{
+	int k = std::pow(2, pow);
+	DoubleMatrix result(this->width / k, this->height / k);
+	Q_ASSERT(result.width != 0 && result.height != 0);
+
+	for (int i = 0; i < result.height; i++) {
+		for (int j = 0; j < result.width; j++) {
+			result.matrix[i * result.width + j] = this->at(i * k, j * k);;
+		}
+	}
+
+	return result;
+}
+
 void DoubleMatrix::printMatrix() const
 {
 	for (int i = 0; i < height; i++) {
@@ -390,7 +412,7 @@ DoubleMatrix DoubleMatrix::createGaussianRow(int width, double sigma)
 	double sum = 0.0;
 
 	for (int i = -offsetW; i <= offsetW; i++) {
-		double val = exp(-(i * i) / (2 * sigma * sigma)) / (2 * M_PI * sigma * sigma);
+		double val = exp(-(i * i) / (2 * sigma * sigma)) / (std::sqrt(2 * M_PI) * sigma);
 		kernel.set(i + offsetW, val);
 		kernel.matrix[i + offsetW] = val;
 		sum += val;
