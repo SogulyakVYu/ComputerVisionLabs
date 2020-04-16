@@ -91,10 +91,10 @@ int main(int argc, char *argv[])
 		DoubleMatrix sobel = doubleImg.calcSobel();
 		DoubleMatrix gauss = doubleImg.gaussian(sigma);
 
-		LabImage::saveImage(dx, "out-dx.png");
-		LabImage::saveImage(dy, "out-dy.png");
-		LabImage::saveImage(sobel, "out-sobel.png");
-		LabImage::saveImage(gauss, "out-gauss.png");
+		LabImage::saveImage(dx, "out-dx.jpg");
+		LabImage::saveImage(dy, "out-dy.jpg");
+		LabImage::saveImage(sobel, "out-sobel.jpg");
+		LabImage::saveImage(gauss, "out-gauss.jpg");
 	}
 
 	if (parser.isSet(pyramidOption)) {
@@ -105,8 +105,8 @@ int main(int argc, char *argv[])
 			if (parser.isSet(lOption)) {
 				std::vector<double> lVals = parseDoubleVector(parser.value(lOption), ";");
 				if (lVals.size() == 3) {
+						std::cout << "L(" << lVals[0] << "," << lVals[1] << "," << lVals[2] << "):" << std::endl;
 						double l = pyramid.getPixel(lVals[0], lVals[1], lVals[2]);
-						std::cout << "L(" << lVals[0] << "," << lVals[1] << "," << lVals[2] << ")=" << l << std::endl;
 				}
 				else {
 					std::cout << "--L arguments is incorrect: " << parser.value(lOption).toStdString() << std::endl;

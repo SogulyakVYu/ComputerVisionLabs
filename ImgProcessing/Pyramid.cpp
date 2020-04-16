@@ -21,20 +21,22 @@ DoubleMatrix& Pyramid::getImage(int i)
 void Pyramid::saveImage(const QString& dir)
 {
 	for (PyramidRow& row : pyramid) {
-		QString fileName = "\\oct-"
-			+ QString::number(row.octave) + "-" 
-			+ QString::number(row.level) + "-" 
+		QString fileName = "\\oct["
+			+ QString::number(row.octave) + "," 
+			+ QString::number(row.level) + "] " 
+			+ QString::number(row.sigmaLocal) + " " 
 			+ QString::number(row.sigmaEffective) 
-			+ ".png";
+			+ ".jpg";
 		LabImage::saveImage(row.image, dir + fileName);
 	}
 }
 
 double Pyramid::getPixel(int x, int y, double sigma)
 {
+	int imageCount = levelCount * octaveCount;
 	double imageIndex = (std::log(sigma / sigma0) / std::log(sigmaStep));
 	imageIndex = std::round(imageIndex + imageIndex / levelCount);
-	imageIndex = imageIndex < 0 ? 0 : imageIndex;
+	imageIndex = imageIndex < 0 ? 0 : imageIndex >= imageCount? imageCount - 1 : imageIndex;
 
 	PyramidRow foundRow = pyramid[(int)imageIndex];
 	int newY = (y / std::pow(2, foundRow.octave));
@@ -55,15 +57,13 @@ Pyramid Pyramid::createFrom(DoubleMatrix& image, double sigmaA, double sigma0, i
 	result.levelCount = levelCount;
 	result.sigma0 = sigma0;
 	result.sigmaStep = levelStep;
-	double summarySigma = sigma;
+	double summarySigma = sigma0;
 
 	DoubleMatrix f(image);
 	f = f.gaussian(sigma);
 	for (int iOctave = 0; iOctave < octaveCount; iOctave++) {
 		sigma = sigma0;
 		result.pyramid.push_back({ iOctave, 0, sigma, summarySigma, f});
-		//std::cout << "(" << iOctave << ", 0) ";
-		//std::cout << "sLoc:" << sigma << " sEff:" << summarySigma << std::endl;
 		for (int iLevel = 1; iLevel < levelCount; iLevel++) {
 			double newSigma = sigma * levelStep;
 			double sigmaTo = std::sqrt(newSigma * newSigma - sigma * sigma);
@@ -71,8 +71,7 @@ Pyramid Pyramid::createFrom(DoubleMatrix& image, double sigmaA, double sigma0, i
 			sigma = newSigma;
 			summarySigma *= levelStep;
 			result.pyramid.push_back({iOctave, iLevel, sigma, summarySigma,  f});
-			//std::cout << "(" << iOctave << ", " << iLevel << ") ";
-			//std::cout << "sLoc:" << newSigma << " sEff:" << summarySigma << std::endl;
+
 		}
 		f = f.downsample();
 	}
