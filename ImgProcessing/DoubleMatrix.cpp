@@ -206,6 +206,11 @@ DoubleMatrix& DoubleMatrix::operator=(const DoubleMatrix& right)
 	return *this;
 }
 
+double& DoubleMatrix::operator[](int i)
+{
+	return matrix[i];
+}
+
 DoubleMatrix& DoubleMatrix::fillMatrix(double val)
 {
 	fill(begin(matrix), end(matrix), val);
@@ -291,45 +296,59 @@ DoubleMatrix DoubleMatrix::dy()
 	return this->convolutionRow(sobelRow).convolutionCol(row101);
 }
 
-DoubleMatrix DoubleMatrix::add(double val)
+DoubleMatrix DoubleMatrix::add(double val) const
 {
 	DoubleMatrix result(width, height);
 	std::transform(begin(matrix), end(matrix), begin(result.matrix), [&](double x) { return x + val; });
 	return result;
 }
 
-DoubleMatrix DoubleMatrix::add(const DoubleMatrix& other)
+DoubleMatrix DoubleMatrix::add(const DoubleMatrix& other) const
 {
 	DoubleMatrix result(width, height);
 	std::transform(begin(matrix), end(matrix), begin(other.matrix), begin(result.matrix), std::plus<double>());
 	return result;
 }
 
-DoubleMatrix DoubleMatrix::sub(double val)
+DoubleMatrix DoubleMatrix::sub(double val) const
 {
 	DoubleMatrix result(width, height);
 	std::transform(begin(matrix), end(matrix), begin(result.matrix), [&](double x) { return x - val; });
 	return result;
 }
 
-DoubleMatrix DoubleMatrix::sub(const DoubleMatrix& other)
+DoubleMatrix DoubleMatrix::sub(const DoubleMatrix& other) const
 {
 	DoubleMatrix result(width, height);
 	std::transform(begin(matrix), end(matrix), begin(other.matrix), begin(result.matrix), std::minus<double>());
 	return result;
 }
 
-DoubleMatrix DoubleMatrix::mul(double val)
+DoubleMatrix DoubleMatrix::mul(double val) const
 {
 	DoubleMatrix result(width, height);
 	std::transform(begin(matrix), end(matrix), begin(result.matrix), [&](double x) { return x * val; });
 	return result;
 }
 
-DoubleMatrix DoubleMatrix::mul(const DoubleMatrix& other)
+DoubleMatrix DoubleMatrix::mul(const DoubleMatrix& other) const
 {
 	DoubleMatrix result(width, height);
 	std::transform(begin(matrix), end(matrix), begin(other.matrix), begin(result.matrix), std::multiplies<double>());
+	return result;
+}
+
+DoubleMatrix DoubleMatrix::div(const DoubleMatrix& other) const
+{
+	DoubleMatrix result(width, height);
+	std::transform(begin(matrix), end(matrix), begin(other.matrix), begin(result.matrix), std::divides<double>());
+	return result;
+}
+
+DoubleMatrix DoubleMatrix::div(double val) const
+{
+	DoubleMatrix result(width, height);
+	std::transform(begin(matrix), end(matrix), begin(result.matrix), [&](double x) { return x / val; });
 	return result;
 }
 
@@ -428,4 +447,54 @@ DoubleMatrix DoubleMatrix::createGaussianRow(int width, double sigma)
 DoubleMatrix DoubleMatrix::createGaussianRow(double sigma)
 {
 	return createGaussianRow(getGaussianSize(sigma), sigma);
+}
+
+DoubleMatrix operator+(const DoubleMatrix& a, const DoubleMatrix& b)
+{
+	return a.add(b);
+}
+
+DoubleMatrix operator+(const DoubleMatrix& a, double b)
+{
+	return a.add(b);
+}
+
+DoubleMatrix operator+(double a, const DoubleMatrix& b)
+{
+	return b.add(b);
+}
+
+DoubleMatrix operator-(const DoubleMatrix& a, const DoubleMatrix& b)
+{
+	return a.sub(b);
+}
+
+DoubleMatrix operator-(const DoubleMatrix& a, double b)
+{
+	return a.sub(b);
+}
+
+DoubleMatrix operator*(const DoubleMatrix& a, const DoubleMatrix& b)
+{
+	return a.mul(b);
+}
+
+DoubleMatrix operator*(const DoubleMatrix& a, double b)
+{
+	return a.mul(b);
+}
+
+DoubleMatrix operator*(double a, const DoubleMatrix& b)
+{
+	return b.mul(a);
+}
+
+DoubleMatrix operator/(const DoubleMatrix& a, const DoubleMatrix& b)
+{
+	return a.div(b);
+}
+
+DoubleMatrix operator/(const DoubleMatrix& a, double b)
+{
+	return a.div(b);
 }

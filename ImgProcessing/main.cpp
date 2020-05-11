@@ -10,8 +10,25 @@
 #include "DoubleMatrix.h"
 #include "Pyramid.h"
 
+
 using timeCl = std::chrono::high_resolution_clock;
 using timeMS = std::chrono::milliseconds;
+
+void processLab1Option(const QCommandLineParser& parser, QList<QCommandLineOption>& options, DoubleMatrix& source);
+void processPyramidOption(const QCommandLineParser& parser, QList<QCommandLineOption>& options, DoubleMatrix& source, QCoreApplication& a);
+void processMoravecAndHarrisOption(QString& srcName,const QCommandLineParser& parser, QList<QCommandLineOption>& options, DoubleMatrix& source);
+void callCornerDetectorMethod(QString& srcName, char method, DoubleMatrix& src, DoubleMatrix& img, std::vector<double> params, bool withANMS, int pointCount);
+
+template<typename T>
+void printValues(const std::vector<std::string>& text, const std::vector<T>& values) {
+	
+	int len = values.size();
+	std::cout << text[0] << ": " << values[0];
+	for (int i = 1; i < len; i++) {
+		std::cout << ", " << text[i] << ": " << values[i];
+	}
+	std::cout << std::endl;
+}
 
 double parseDoubleOrDefault(const QString& line, double dflt) {
 	bool isDouble = false;
@@ -58,6 +75,12 @@ int main(int argc, char *argv[])
 	parser.addOption(showInfoOption);
 	QCommandLineOption lab1Option("Lab1", "Create dx,dy, gauss, sobel image");
 	parser.addOption(lab1Option);
+	QCommandLineOption moravicDetectorOption("moravec", "Moravec corner detector 'winSize;localMaxWinSize;threshold", "moravecVal");
+	parser.addOption(moravicDetectorOption);
+	QCommandLineOption harrisDetectorOption("harris", "Harris corner detector 'winSize;localMaxWinSize;threshold", "harrisVal");
+	parser.addOption(harrisDetectorOption);
+	QCommandLineOption anmsOption("anms", "ANMS filter ", "anmsVal");
+	parser.addOption(anmsOption);
 	parser.process(a);
 
 	const QStringList posArgs = parser.positionalArguments();
@@ -81,26 +104,51 @@ int main(int argc, char *argv[])
 		l.printInfo();
 	}
 
+	// Обработка изображения
 	IntMatrix img = IntMatrix::fromImage(l.getGrayScale());
 	DoubleMatrix doubleImg = img.toDoubleMatrix();
-	doubleImg.normalize(0, 1);
+	doubleImg.norm1();
 
-	if (parser.isSet(lab1Option)) {
-		DoubleMatrix dx = doubleImg.dx();
-		DoubleMatrix dy = doubleImg.dy();
-		DoubleMatrix sobel = doubleImg.calcSobel();
-		DoubleMatrix gauss = doubleImg.gaussian(sigma);
+	// Если задан флаг --Lab1
+	processLab1Option(parser, QList<QCommandLineOption>{ lab1Option, sigmaOption }, doubleImg);
+	// Если задан аргумент --pyramid
+	processPyramidOption(parser, QList<QCommandLineOption>{ pyramidOption, lOption }, doubleImg, a);
+	// Если задан аргумент --morave или --harris
+	processMoravecAndHarrisOption(sourceFileInfo.baseName(),  
+		parser, QList<QCommandLineOption>{ moravicDetectorOption, harrisDetectorOption, anmsOption, sigmaOption}, doubleImg);
 
-		LabImage::saveImage(dx, "out-dx.jpg");
-		LabImage::saveImage(dy, "out-dy.jpg");
-		LabImage::saveImage(sobel, "out-sobel.jpg");
-		LabImage::saveImage(gauss, "out-gauss.jpg");
+	auto end = timeCl::now();
+	auto delta = std::chrono::duration_cast<timeMS>(end - start);
+	if (parser.isSet(showInfoOption)) {
+		std::cout << "Image Processing Complete(" << delta.count() << "ms)" << std::endl;
 	}
 
+	return 0;
+}
+
+void processLab1Option(const QCommandLineParser& parser, QList<QCommandLineOption>& options, DoubleMatrix& source) {
+	if (!parser.isSet(options[0])) {
+		return;
+	}
+	double sigma = parseDoubleOrDefault(parser.value(options[1]), 1.0);
+	DoubleMatrix dx = source.dx();
+	DoubleMatrix dy = source.dy();
+	DoubleMatrix sobel = source.calcSobel();
+	DoubleMatrix gauss = source.gaussian(sigma);
+
+	LabImage::saveImage(dx, "out-dx.jpg");
+	LabImage::saveImage(dy, "out-dy.jpg");
+	LabImage::saveImage(sobel, "out-sobel.jpg");
+	LabImage::saveImage(gauss, "out-gauss.jpg");
+}
+
+void processPyramidOption(const QCommandLineParser& parser, QList<QCommandLineOption>& options, DoubleMatrix& source, QCoreApplication& a) {
+	QCommandLineOption& pyramidOption = options[0];
+	QCommandLineOption& lOption = options[1];
 	if (parser.isSet(pyramidOption)) {
 		std::vector<double> pyramidVals = parseDoubleVector(parser.value(pyramidOption), ";");
 		if (pyramidVals.size() == 4) {
-			auto pyramid = Pyramid::createFrom(doubleImg, pyramidVals[0], pyramidVals[1], pyramidVals[2], pyramidVals[3]);
+			auto pyramid = Pyramid::createFrom(source, pyramidVals[0], pyramidVals[1], pyramidVals[2], pyramidVals[3]);
 			pyramid.saveImage(a.applicationDirPath() + "\\pyramid");
 			if (parser.isSet(lOption)) {
 				std::vector<double> lVals = parseDoubleVector(parser.value(lOption), ";");
@@ -117,12 +165,59 @@ int main(int argc, char *argv[])
 			std::cout << "--pyramid arguments is incorrect: " << parser.value(pyramidOption).toStdString() << std::endl;
 		}
 	}
+}
 
-	auto end = timeCl::now();
-	auto delta = std::chrono::duration_cast<timeMS>(end - start);
-	if (parser.isSet(showInfoOption)) {
-		std::cout << "Image Processing Complete(" << delta.count() << "ms)" << std::endl;
+void processMoravecAndHarrisOption(QString& srcName, const QCommandLineParser& parser, QList<QCommandLineOption>& options, DoubleMatrix& source) {
+	QCommandLineOption& moravicDetectorOption = options[0];
+	QCommandLineOption& harrisDetectorOption = options[1];
+	QCommandLineOption& anmsOption = options[2];
+	DoubleMatrix workImg = source.gaussian(parseDoubleOrDefault(parser.value(options[3]), 1.));
+	double sigma = parseDoubleOrDefault(parser.value(options[3]), 1.0);
+	int defaultAnmsPointCount = 500;
+	bool withAnms = parser.isSet(anmsOption);
+	int anmsPointCount = parseIntOrDefault(parser.value(anmsOption), defaultAnmsPointCount);
+	char method = 0;
+
+	if (parser.isSet(moravicDetectorOption)) {
+		std::vector<double> params = parseDoubleVector(parser.value(moravicDetectorOption), ";");
+		callCornerDetectorMethod(srcName, 'm', source, workImg, params, withAnms, anmsPointCount);
 	}
+	if (parser.isSet(harrisDetectorOption)) {
+		std::vector<double> params = parseDoubleVector(parser.value(harrisDetectorOption), ";");
+		callCornerDetectorMethod(srcName, 'h', source, workImg, params, withAnms, anmsPointCount);
+	}
+}
 
-	return 0;
+void callCornerDetectorMethod(QString& srcName, char method, DoubleMatrix& src, DoubleMatrix& img, std::vector<double> params, bool withANMS, int pointCount) {
+	printValues({ "winSize", "pSize", "threshold" }, params);
+	DoubleMatrix opImg;
+	QString filename;
+	QColor pointsColor;
+	double winSize = params[0];
+	double pSize = params[1];
+	double threshold = params[2];
+	if (method == 'm') {
+		std::cout << "Moravec ";
+		filename = "moravec";
+		pointsColor = Qt::red;
+		opImg = img.operatorMoravec(winSize);
+	}
+    else if (method == 'h') {
+		std::cout << "Harris ";
+		filename = "harris";
+		pointsColor = Qt::green;
+		opImg = img.operatorHarris(winSize);
+	}
+	std::vector<KeyPoint> points = opImg.getLocalMax(pSize, threshold);
+	if (withANMS) {
+		std::cout << "[ANMS]";
+		filename += "-anms" + QString::number(pointCount);
+		points = KeyPoint::anms(points, pointCount);
+	}
+	std::cout << " point count = " << points.size() << std::endl;
+	QImage qimg = LabImage::getImageFromMatrix(DoubleMatrix(src).norm255());
+	LabImage result(qimg);
+
+	result.drawKeyPoints(points, pointsColor);
+	result.save(srcName + "-" + filename + ".png");
 }

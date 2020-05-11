@@ -81,6 +81,8 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="DoubleMatrix.cpp" />
+    <ClCompile Include="CornerDetectors.cpp" />
+    <ClCompile Include="KeyPoint.cpp" />
     <ClCompile Include="IntMatrix.cpp" />
     <ClCompile Include="LabImage.cpp" />
     <ClCompile Include="main.cpp" />
@@ -88,6 +90,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DoubleMatrix.h" />
+    <ClInclude Include="KeyPoint.h" />
     <ClInclude Include="IntMatrix.h" />
     <ClInclude Include="LabImage.h" />
     <ClInclude Include="Pyramid.h" />

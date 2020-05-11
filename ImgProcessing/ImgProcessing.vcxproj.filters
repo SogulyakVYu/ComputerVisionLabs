@@ -19,6 +19,9 @@
       <Extensions>qrc;*</Extensions>
       <ParseFiles>false</ParseFiles>
     </Filter>
+    <Filter Include="Source Files\DoubleMatrix">
+      <UniqueIdentifier>{e8e6a546-9e6c-433b-8c50-b37b5a3b49ea}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -27,13 +30,19 @@
     <ClCompile Include="IntMatrix.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="DoubleMatrix.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="LabImage.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Pyramid.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DoubleMatrix.cpp">
+      <Filter>Source Files\DoubleMatrix</Filter>
+    </ClCompile>
+    <ClCompile Include="CornerDetectors.cpp">
+      <Filter>Source Files\DoubleMatrix</Filter>
+    </ClCompile>
+    <ClCompile Include="KeyPoint.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -48,6 +57,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Pyramid.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="KeyPoint.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

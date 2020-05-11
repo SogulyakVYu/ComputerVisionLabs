@@ -17,6 +17,10 @@ public:
 	// Возвращает копию изображения в оттенках серого
 	QImage getGrayScale();
 
+	// Выделить интересные точки на изображении  
+	void drawKeyPoints(const std::vector<KeyPoint>& points, QColor color);
+	void save(const QString& fileName);
+
 	static IntMatrix createIntMatrixFromImage(QImage& source, char channel);
 	// Возвращает копию изображения в оттенках серого
 	static QImage getGrayScale(QImage& source);

@@ -1,47 +1,55 @@
 #pragma once
 #include <vector>
+#include <functional>
+#include "KeyPoint.h"
 
 class DoubleMatrix
 {
 public:
-	// Тип заполнения границ изображения
+	// РўРёРї Р·Р°РїРѕР»РЅРµРЅРёСЏ РіСЂР°РЅРёС† РёР·РѕР±СЂР°Р¶РµРЅРёСЏ
 	enum class BorderType
 	{
-		// Черный цвет
+		// Р§РµСЂРЅС‹Р№ С†РІРµС‚
 		Black,
-		// Граничный пиксель
+		// Р“СЂР°РЅРёС‡РЅС‹Р№ РїРёРєСЃРµР»СЊ
 		BorderPixel,
-		// Отражение края
+		// РћС‚СЂР°Р¶РµРЅРёРµ РєСЂР°СЏ
 		Reflect,
-		// Заворачивание края
+		// Р—Р°РІРѕСЂР°С‡РёРІР°РЅРёРµ РєСЂР°СЏ
 		Wrap
 	};
 private:
-
-	// Тип заполнения границы при вызове метода get
+	// РўРёРї Р·Р°РїРѕР»РЅРµРЅРёСЏ РіСЂР°РЅРёС†С‹ РїСЂРё РІС‹Р·РѕРІРµ РјРµС‚РѕРґР° get
 	static BorderType DefaultBorderType;
-	// Матрица вида [1, 0, -1] для вычисления производных
+	// РњР°С‚СЂРёС†Р° РІРёРґР° [1, 0, -1] РґР»СЏ РІС‹С‡РёСЃР»РµРЅРёСЏ РїСЂРѕРёР·РІРѕРґРЅС‹С…
 	static DoubleMatrix row101;
-	// Матрица вида [1, 2 1] для вычисления производных (Оператор Собеля)
+	// РњР°С‚СЂРёС†Р° РІРёРґР° [1, 2 1] РґР»СЏ РІС‹С‡РёСЃР»РµРЅРёСЏ РїСЂРѕРёР·РІРѕРґРЅС‹С… (РћРїРµСЂР°С‚РѕСЂ РЎРѕР±РµР»СЏ)
 	static DoubleMatrix sobelRow;
-	// Основной вектор со значениями яркости избражения или ядра свертки
+	// РћСЃРЅРѕРІРЅРѕР№ РІРµРєС‚РѕСЂ СЃРѕ Р·РЅР°С‡РµРЅРёСЏРјРё СЏСЂРєРѕСЃС‚Рё РёР·Р±СЂР°Р¶РµРЅРёСЏ РёР»Рё СЏРґСЂР° СЃРІРµСЂС‚РєРё
 	std::vector<double> matrix;
-	// Высота матрицы
+	// Р’С‹СЃРѕС‚Р° РјР°С‚СЂРёС†С‹
 	int height;
-	// Ширина матрицы
+	// РЁРёСЂРёРЅР° РјР°С‚СЂРёС†С‹
 	int width;
 
-	// Возвращает пиксель на позиции (i, j) изображения или черный цвет за границами изображения
+	// Р’РѕР·РІСЂР°С‰Р°РµС‚ РїРёРєСЃРµР»СЊ РЅР° РїРѕР·РёС†РёРё (i, j) РёР·РѕР±СЂР°Р¶РµРЅРёСЏ РёР»Рё С‡РµСЂРЅС‹Р№ С†РІРµС‚ Р·Р° РіСЂР°РЅРёС†Р°РјРё РёР·РѕР±СЂР°Р¶РµРЅРёСЏ
 	double getWithBlackBorder(int i, int j) const;
-	// Возвращает пиксель на позиции (i, j) изображения или граничный пиксель за границами изображения
+	// Р’РѕР·РІСЂР°С‰Р°РµС‚ РїРёРєСЃРµР»СЊ РЅР° РїРѕР·РёС†РёРё (i, j) РёР·РѕР±СЂР°Р¶РµРЅРёСЏ РёР»Рё РіСЂР°РЅРёС‡РЅС‹Р№ РїРёРєСЃРµР»СЊ Р·Р° РіСЂР°РЅРёС†Р°РјРё РёР·РѕР±СЂР°Р¶РµРЅРёСЏ
 	double getWithBorderPixel(int i, int j) const;
-	// Возвращает пиксель на позиции (i, j) изображения или отражение изображения за границей
+	// Р’РѕР·РІСЂР°С‰Р°РµС‚ РїРёРєСЃРµР»СЊ РЅР° РїРѕР·РёС†РёРё (i, j) РёР·РѕР±СЂР°Р¶РµРЅРёСЏ РёР»Рё РѕС‚СЂР°Р¶РµРЅРёРµ РёР·РѕР±СЂР°Р¶РµРЅРёСЏ Р·Р° РіСЂР°РЅРёС†РµР№
 	double getWithReflectBorder(int i, int j) const;
-	// Возвращает пиксель на позиции (i, j) изображения или "завернутый" край изображения 
+	// Р’РѕР·РІСЂР°С‰Р°РµС‚ РїРёРєСЃРµР»СЊ РЅР° РїРѕР·РёС†РёРё (i, j) РёР·РѕР±СЂР°Р¶РµРЅРёСЏ РёР»Рё "Р·Р°РІРµСЂРЅСѓС‚С‹Р№" РєСЂР°Р№ РёР·РѕР±СЂР°Р¶РµРЅРёСЏ 
 	double getWithWrapBorder(int i, int j) const;
 
-	// Возвращает размер (ширину) ядра фильтра гаусса по правилу полуразмер=3*sigma 
+	// РћС€РёР±РєР° РїСЂРё СЃРґРІРёРіРµ РѕРєРЅР° РІ РґРµС‚РµРєС‚РѕСЂРµ РњРѕСЂР°РІРµРєР°
+	double moravecC(int x, int y, const std::vector<int>& windowSize, const std::vector<int>& d);
+
+	// Р’РѕР·РІСЂР°С‰Р°РµС‚ СЂР°Р·РјРµСЂ (С€РёСЂРёРЅСѓ) СЏРґСЂР° С„РёР»СЊС‚СЂР° РіР°СѓСЃСЃР° РїРѕ РїСЂР°РІРёР»Сѓ РїРѕР»СѓСЂР°Р·РјРµСЂ=3*sigma 
 	static int getGaussianSize(double sigma);
+	// РћСЂРёРіРёРЅР°Р»СЊРЅС‹Р№ РѕРїРµСЂР°С‚РѕСЂ РҐР°СЂСЂРёСЃР° 
+	static DoubleMatrix harrisF(DoubleMatrix& a, DoubleMatrix& b, DoubleMatrix& c, double coef = 0.04);
+	// РћРїРµСЂР°С‚РѕСЂ РҐР°СЂСЂРёСЃР° СЃ РёСЃРїРѕР»СЊР·РѕРІР°РЅРёРµРј lambda min
+	static DoubleMatrix harrisE(DoubleMatrix& a, DoubleMatrix& b, DoubleMatrix& c);
 public:
 	DoubleMatrix();
 	DoubleMatrix(int w, int h);
@@ -55,53 +63,79 @@ public:
 
 	DoubleMatrix& operator=(const DoubleMatrix& right);
 	DoubleMatrix& operator=(DoubleMatrix&& right) = default;
+	double& operator[](int i);
+	friend DoubleMatrix operator+(const DoubleMatrix& a, const DoubleMatrix& b);
+	friend DoubleMatrix operator+(const DoubleMatrix& a, double b);
+	friend DoubleMatrix operator+(double a, const DoubleMatrix& b);
+	friend DoubleMatrix operator-(const DoubleMatrix& a, const DoubleMatrix& b);
+	friend DoubleMatrix operator-(const DoubleMatrix& a, double b);
+	friend DoubleMatrix operator*(const DoubleMatrix& a, const DoubleMatrix& b);
+	friend DoubleMatrix operator*(const DoubleMatrix& a, double b);
+	friend DoubleMatrix operator*(double a, const DoubleMatrix& b);
+	friend DoubleMatrix operator/(const DoubleMatrix& a, const DoubleMatrix& b);
+	friend DoubleMatrix operator/(const DoubleMatrix& a, double b);
 
 	DoubleMatrix& fillMatrix(double val);
 	void set(int i, int j, double val);
 	void set(int i, double val);
-	// Возвращает пиксель на позиции (i, j) или заданый пиксель за границей изображения
+	// Р’РѕР·РІСЂР°С‰Р°РµС‚ РїРёРєСЃРµР»СЊ РЅР° РїРѕР·РёС†РёРё (i, j) РёР»Рё Р·Р°РґР°РЅС‹Р№ РїРёРєСЃРµР»СЊ Р·Р° РіСЂР°РЅРёС†РµР№ РёР·РѕР±СЂР°Р¶РµРЅРёСЏ
 	double get(int i, int j) const;
-	// Возвращает пиксель на позиции (i, j)
+	// Р’РѕР·РІСЂР°С‰Р°РµС‚ РїРёРєСЃРµР»СЊ РЅР° РїРѕР·РёС†РёРё (i, j)
 	double at(int i, int j) const { return matrix[i * width + j]; }
+	double at(int i) const { return matrix[i]; }
 
-	// Свертка по строке
+	// РЎРІРµСЂС‚РєР° РїРѕ СЃС‚СЂРѕРєРµ
 	DoubleMatrix convolutionRow(const DoubleMatrix& other) const;
-	// Свертка по столбцу (ядро задается в виде строки)
+	// РЎРІРµСЂС‚РєР° РїРѕ СЃС‚РѕР»Р±С†Сѓ (СЏРґСЂРѕ Р·Р°РґР°РµС‚СЃСЏ РІ РІРёРґРµ СЃС‚СЂРѕРєРё)
 	DoubleMatrix convolutionCol(const DoubleMatrix& other) const;
-	// Свертка по прямоугольному ядру
+	// РЎРІРµСЂС‚РєР° РїРѕ РїСЂСЏРјРѕСѓРіРѕР»СЊРЅРѕРјСѓ СЏРґСЂСѓ
 	DoubleMatrix convolution(const DoubleMatrix& other) const;
-	// Нормирование матрицы
+	// РќРѕСЂРјРёСЂРѕРІР°РЅРёРµ РјР°С‚СЂРёС†С‹
 	DoubleMatrix& normalize(double newMin, double newMax);
-	// Возвращает копию транспонированной матрицы
+	// Р’РѕР·РІСЂР°С‰Р°РµС‚ РєРѕРїРёСЋ С‚СЂР°РЅСЃРїРѕРЅРёСЂРѕРІР°РЅРЅРѕР№ РјР°С‚СЂРёС†С‹
 	DoubleMatrix transpose();
-	// Возвращает результат применения оператора Собеля  
+	// Р’РѕР·РІСЂР°С‰Р°РµС‚ СЂРµР·СѓР»СЊС‚Р°С‚ РїСЂРёРјРµРЅРµРЅРёСЏ РѕРїРµСЂР°С‚РѕСЂР° РЎРѕР±РµР»СЏ  
 	DoubleMatrix calcSobel();
-	// Возвращает результат применения фильтра Гаусса
+	// Р’РѕР·РІСЂР°С‰Р°РµС‚ СЂРµР·СѓР»СЊС‚Р°С‚ РїСЂРёРјРµРЅРµРЅРёСЏ С„РёР»СЊС‚СЂР° Р“Р°СѓСЃСЃР°
 	DoubleMatrix gaussian(double sigma);
-	// Возвращает производную по X
+	// Р’РѕР·РІСЂР°С‰Р°РµС‚ РїСЂРѕРёР·РІРѕРґРЅСѓСЋ РїРѕ X
 	DoubleMatrix dx();
-	// Возвращает производную по Y
+	// Р’РѕР·РІСЂР°С‰Р°РµС‚ РїСЂРѕРёР·РІРѕРґРЅСѓСЋ РїРѕ Y
 	DoubleMatrix dy();
-	DoubleMatrix add(double val);
-	DoubleMatrix add(const DoubleMatrix& mat);
-	DoubleMatrix sub(double val);
-	DoubleMatrix sub(const DoubleMatrix& mat);
-	DoubleMatrix mul(double val);
-	DoubleMatrix mul(const DoubleMatrix& mat);
+	DoubleMatrix add(double val) const;
+	DoubleMatrix add(const DoubleMatrix& mat) const;
+	DoubleMatrix sub(double val) const;
+	DoubleMatrix sub(const DoubleMatrix& mat) const;
+	DoubleMatrix mul(double val) const;
+	DoubleMatrix mul(const DoubleMatrix& mat) const;
+	DoubleMatrix div(const DoubleMatrix& mat) const;
+	DoubleMatrix div(double val) const;
 	bool allClose(DoubleMatrix& other, double eps);
-	// Уменьшает размер изображения в два раза
+	// РЈРјРµРЅСЊС€Р°РµС‚ СЂР°Р·РјРµСЂ РёР·РѕР±СЂР°Р¶РµРЅРёСЏ РІ РґРІР° СЂР°Р·Р°
 	DoubleMatrix downsample(int pow = 1);
 	void printMatrix() const;
 
-	// Установка типа заполнения границ изображения
+	DoubleMatrix& norm1() { return normalize(0, 1); }
+	DoubleMatrix& norm255() { return normalize(0, 255); }
+	// Р”РµС‚РµРєС‚РѕСЂ СѓРіР»РѕРІ РњРѕСЂР°РІРµРєР°
+	DoubleMatrix operatorMoravec(int windowSize);
+	// Р”РµС‚РµРєС‚РѕСЂ СѓРіР»РѕРІ РҐР°СЂСЂРёСЃР°
+	DoubleMatrix operatorHarris(int windowSize);
+	// Р’РѕР·СЂР°С‰Р°РµС‚ РЅР°Р±РѕСЂ РёРЅС‚РµСЂРµСЃРЅС‹С… С‚РѕС‡РµРє СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓСЋС‰РёС… Р»РѕРєР°Р»СЊРЅС‹Рј РјР°РєСЃРёРјСѓРјР°Рј РІС‹С€Рµ Р·Р°РґР°РЅРЅРѕРіРѕ РїРѕСЂРѕРіР°
+	std::vector<KeyPoint> getLocalMax(const int windowSize, double threshold);
+	std::vector<KeyPoint> getLocalMax(const std::vector<int>& windowSize, double threshold);
+	// Р’РѕР·РІСЂР°С‰Р°РµС‚ РЅР°Р±РѕСЂ РёРЅС‚РµСЂРµСЃРЅС‹С… С‚РѕС‡РµРє, Р·РЅР°С‡РµРЅРёСЏ РєРѕС‚РѕСЂС‹С… РІС‹С€Рµ РїРѕСЂРѕРіР°
+	std::vector<KeyPoint> getKeyPoints(double threshold);
+
+	// РЈСЃС‚Р°РЅРѕРІРєР° С‚РёРїР° Р·Р°РїРѕР»РЅРµРЅРёСЏ РіСЂР°РЅРёС† РёР·РѕР±СЂР°Р¶РµРЅРёСЏ
 	static void setDefaultBoderType(BorderType type);
-	// Копирует изображение с добавлением границ
+	// РљРѕРїРёСЂСѓРµС‚ РёР·РѕР±СЂР°Р¶РµРЅРёРµ СЃ РґРѕР±Р°РІР»РµРЅРёРµРј РіСЂР°РЅРёС†
 	static void copyWithBorder(const DoubleMatrix& src, DoubleMatrix* dest, int xOffset, int yOffset);
-	// Свертка по прямоугольному ядру
+	// РЎРІРµСЂС‚РєР° РїРѕ РїСЂСЏРјРѕСѓРіРѕР»СЊРЅРѕРјСѓ СЏРґСЂСѓ
 	static DoubleMatrix convolution(const DoubleMatrix& f, const DoubleMatrix& h);
 	static DoubleMatrix createGaussian(int width, int height, double sigma);
 	static DoubleMatrix createGaussian(double sigma);
-	// Создает ядро фильтра Гаусса в виде строки заданной ширины
+	// РЎРѕР·РґР°РµС‚ СЏРґСЂРѕ С„РёР»СЊС‚СЂР° Р“Р°СѓСЃСЃР° РІ РІРёРґРµ СЃС‚СЂРѕРєРё Р·Р°РґР°РЅРЅРѕР№ С€РёСЂРёРЅС‹
 	static DoubleMatrix createGaussianRow(int width, double sigma);
 	static DoubleMatrix createGaussianRow(double sigma);
 };

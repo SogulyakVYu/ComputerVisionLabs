@@ -3,6 +3,7 @@
 
 LabImage::LabImage(QImage& source): sourceImage(source)
 {
+	sourceImage = source;
 	width = source.width();
 	height = source.height();
 	imageFormat = source.format();
@@ -17,6 +18,21 @@ void LabImage::printInfo()
 QImage LabImage::getGrayScale()
 {
 	return getGrayScale(sourceImage);
+}
+
+void LabImage::drawKeyPoints(const std::vector<KeyPoint>& points, QColor color)
+{
+	QPainter paint(&sourceImage);
+	paint.setPen(color);
+	for (auto p : points) {
+		paint.drawEllipse(QPoint(p.x, p.y), 2, 2);
+	}
+	paint.end();
+}
+
+void LabImage::save(const QString& fileName)
+{
+	sourceImage.save(fileName);
 }
 
 IntMatrix LabImage::createIntMatrixFromImage(QImage& source, char channel)
@@ -114,5 +130,5 @@ void LabImage::saveImage(IntMatrix& matrix, const QString& fileName)
 void LabImage::saveImage(DoubleMatrix& matrix, const QString& fileName)
 {
 	DoubleMatrix m = DoubleMatrix(matrix);
-	getImageFromMatrix(m.normalize(0, 255)).save(fileName);
+	getImageFromMatrix(m.norm255()).save(fileName);
 }
