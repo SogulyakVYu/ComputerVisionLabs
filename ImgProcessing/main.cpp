@@ -171,12 +171,16 @@ void processMoravecAndHarrisOption(QString& srcName, const QCommandLineParser& p
 	QCommandLineOption& moravicDetectorOption = options[0];
 	QCommandLineOption& harrisDetectorOption = options[1];
 	QCommandLineOption& anmsOption = options[2];
-	DoubleMatrix workImg = source.gaussian(parseDoubleOrDefault(parser.value(options[3]), 1.));
-	double sigma = parseDoubleOrDefault(parser.value(options[3]), 1.0);
+	QCommandLineOption& sigmaOption = options[3];
+	DoubleMatrix workImg(source);
 	int defaultAnmsPointCount = 500;
 	bool withAnms = parser.isSet(anmsOption);
 	int anmsPointCount = parseIntOrDefault(parser.value(anmsOption), defaultAnmsPointCount);
 	char method = 0;
+	if (parser.isSet(sigmaOption)) {
+		double sigma = parseDoubleOrDefault(parser.value(sigmaOption), 1.);
+		workImg = workImg.gaussian(sigma);
+	}
 
 	if (parser.isSet(moravicDetectorOption)) {
 		std::vector<double> params = parseDoubleVector(parser.value(moravicDetectorOption), ";");
@@ -189,7 +193,6 @@ void processMoravecAndHarrisOption(QString& srcName, const QCommandLineParser& p
 }
 
 void callCornerDetectorMethod(QString& srcName, char method, DoubleMatrix& src, DoubleMatrix& img, std::vector<double> params, bool withANMS, int pointCount) {
-	printValues({ "winSize", "pSize", "threshold" }, params);
 	DoubleMatrix opImg;
 	QString filename;
 	QColor pointsColor;
@@ -197,13 +200,13 @@ void callCornerDetectorMethod(QString& srcName, char method, DoubleMatrix& src, 
 	double pSize = params[1];
 	double threshold = params[2];
 	if (method == 'm') {
-		std::cout << "Moravec ";
+		std::cout << "Moravec";
 		filename = "moravec";
 		pointsColor = Qt::red;
 		opImg = img.operatorMoravec(winSize);
 	}
     else if (method == 'h') {
-		std::cout << "Harris ";
+		std::cout << "Harris";
 		filename = "harris";
 		pointsColor = Qt::green;
 		opImg = img.operatorHarris(winSize);
@@ -215,6 +218,7 @@ void callCornerDetectorMethod(QString& srcName, char method, DoubleMatrix& src, 
 		points = KeyPoint::anms(points, pointCount);
 	}
 	std::cout << " point count = " << points.size() << std::endl;
+	printValues({ "winSize", "pSize", "threshold" }, params);
 	QImage qimg = LabImage::getImageFromMatrix(DoubleMatrix(src).norm255());
 	LabImage result(qimg);
 
