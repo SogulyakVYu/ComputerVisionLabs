@@ -1,7 +1,9 @@
-#include "DoubleMatrix.h"
 #include <iostream>
 #include <algorithm>
+#include <numeric>
+#include <functional>
 #include <QtCore\qmath.h>
+#include "DoubleMatrix.h"
 
 DoubleMatrix::BorderType DoubleMatrix::DefaultBorderType = DoubleMatrix::BorderType::Reflect;
 DoubleMatrix DoubleMatrix::row101 = DoubleMatrix{ {1, 0, -1} };
@@ -267,7 +269,7 @@ DoubleMatrix DoubleMatrix::transpose()
 	return result;
 }
 
-DoubleMatrix DoubleMatrix::calcSobel()
+DoubleMatrix DoubleMatrix::calcSobel() const
 {
 	DoubleMatrix gX = dx();
 	DoubleMatrix gY = dy();
@@ -280,18 +282,18 @@ DoubleMatrix DoubleMatrix::calcSobel()
 	return result;
 }
 
-DoubleMatrix DoubleMatrix::gaussian(double sigma)
+DoubleMatrix DoubleMatrix::gaussian(double sigma) const
 {
 	DoubleMatrix gaussianX = createGaussianRow(sigma);
 	return this->convolutionRow(gaussianX).convolutionCol(gaussianX);
 }
 
-DoubleMatrix DoubleMatrix::dx()
+DoubleMatrix DoubleMatrix::dx() const
 {
 	return this->convolutionRow(row101).convolutionCol(sobelRow);
 }
 
-DoubleMatrix DoubleMatrix::dy()
+DoubleMatrix DoubleMatrix::dy() const
 {
 	return this->convolutionRow(sobelRow).convolutionCol(row101);
 }
@@ -349,6 +351,18 @@ DoubleMatrix DoubleMatrix::div(double val) const
 {
 	DoubleMatrix result(width, height);
 	std::transform(begin(matrix), end(matrix), begin(result.matrix), [&](double x) { return x / val; });
+	return result;
+}
+
+double DoubleMatrix::sum() const 
+{
+	return std::accumulate(begin(matrix), end(matrix), 0.0);
+}
+
+DoubleMatrix DoubleMatrix::abs() const
+{
+	DoubleMatrix result(width, height);
+	std::transform(begin(matrix), end(matrix), begin(result.matrix), [&](double x) { return std::abs(x); });
 	return result;
 }
 
@@ -497,4 +511,20 @@ DoubleMatrix operator/(const DoubleMatrix& a, const DoubleMatrix& b)
 DoubleMatrix operator/(const DoubleMatrix& a, double b)
 {
 	return a.div(b);
+}
+
+DoubleMatrix DoubleMatrix::gradientDirection() const
+{
+	DoubleMatrix dx = this->dx();
+	DoubleMatrix dy = this->dy();
+	DoubleMatrix result(width, height);
+	for (int i = 0; i < height; i++) {
+		for (int j = 0; j < width; j++) {
+			double rad = std::atan2(-dy.at(i,j), -dx.at(i, j));
+			rad = rad + M_PI;
+			result.set(i, j, rad);
+		}
+	}
+
+	return result;
 }

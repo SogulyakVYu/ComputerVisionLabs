@@ -1,8 +1,5 @@
 #pragma once
 #include <vector>
-#include <functional>
-#include "KeyPoint.h"
-
 class DoubleMatrix
 {
 public:
@@ -16,7 +13,9 @@ public:
 		// Отражение края
 		Reflect,
 		// Заворачивание края
-		Wrap
+		Wrap,
+		// Значение по умолчанию
+		Default = Reflect
 	};
 private:
 	// Тип заполнения границы при вызове метода get
@@ -60,6 +59,7 @@ public:
 
 	int getWidth() const { return width; }
 	int getHeight() const { return height; }
+	int getSize() const { return height * width; }
 
 	DoubleMatrix& operator=(const DoubleMatrix& right);
 	DoubleMatrix& operator=(DoubleMatrix&& right) = default;
@@ -95,13 +95,13 @@ public:
 	// Возвращает копию транспонированной матрицы
 	DoubleMatrix transpose();
 	// Возвращает результат применения оператора Собеля  
-	DoubleMatrix calcSobel();
+	DoubleMatrix calcSobel() const;
 	// Возвращает результат применения фильтра Гаусса
-	DoubleMatrix gaussian(double sigma);
+	DoubleMatrix gaussian(double sigma) const;
 	// Возвращает производную по X
-	DoubleMatrix dx();
+	DoubleMatrix dx() const;
 	// Возвращает производную по Y
-	DoubleMatrix dy();
+	DoubleMatrix dy() const;
 	DoubleMatrix add(double val) const;
 	DoubleMatrix add(const DoubleMatrix& mat) const;
 	DoubleMatrix sub(double val) const;
@@ -110,6 +110,8 @@ public:
 	DoubleMatrix mul(const DoubleMatrix& mat) const;
 	DoubleMatrix div(const DoubleMatrix& mat) const;
 	DoubleMatrix div(double val) const;
+	double sum() const;
+	DoubleMatrix abs() const;
 	bool allClose(DoubleMatrix& other, double eps);
 	// Уменьшает размер изображения в два раза
 	DoubleMatrix downsample(int pow = 1);
@@ -118,14 +120,11 @@ public:
 	DoubleMatrix& norm1() { return normalize(0, 1); }
 	DoubleMatrix& norm255() { return normalize(0, 255); }
 	// Детектор углов Моравека
-	DoubleMatrix operatorMoravec(int windowSize);
+	DoubleMatrix operatorMoravec(int windowSize) const;
 	// Детектор углов Харриса
-	DoubleMatrix operatorHarris(int windowSize);
-	// Возращает набор интересных точек соответствующих локальным максимумам выше заданного порога
-	std::vector<KeyPoint> getLocalMax(const int windowSize, double threshold);
-	std::vector<KeyPoint> getLocalMax(const std::vector<int>& windowSize, double threshold);
-	// Возвращает набор интересных точек, значения которых выше порога
-	std::vector<KeyPoint> getKeyPoints(double threshold);
+	DoubleMatrix operatorHarris(int windowSize) const;
+
+	DoubleMatrix gradientDirection() const;
 
 	// Установка типа заполнения границ изображения
 	static void setDefaultBoderType(BorderType type);
@@ -139,4 +138,3 @@ public:
 	static DoubleMatrix createGaussianRow(int width, double sigma);
 	static DoubleMatrix createGaussianRow(double sigma);
 };
-

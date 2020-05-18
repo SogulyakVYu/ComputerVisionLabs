@@ -14,25 +14,3 @@ double KeyPoint::distance(KeyPoint a, KeyPoint b)
 	double coordY = a.y - b.y;
 	return sqrt(coordX * coordX + coordY * coordY);
 }
-
-std::vector<KeyPoint> KeyPoint::anms(std::vector<KeyPoint>& points,int pointsCount, double minR, double maxR)
-{
-	double r = minR;
-	double step = 1;
-	while (points.size() > pointsCount && r < maxR)
-	{
-		auto toRemove = std::remove_if(begin(points), end(points), 
-			[&](KeyPoint& pointA) {
-				for (auto& pointB : points) {
-					if (distance(pointA, pointB) < r && pointA.f < pointB.f) {
-						return true;
-					}
-				}
-				return false;
-			});
-		points.erase(toRemove, end(points));
-		r += step;
-	}
-
-	return points;
-}

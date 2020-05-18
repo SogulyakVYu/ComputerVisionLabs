@@ -80,18 +80,26 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Descriptor.cpp" />
+    <ClCompile Include="DescriptorExtractor.cpp" />
     <ClCompile Include="DoubleMatrix.cpp" />
     <ClCompile Include="CornerDetectors.cpp" />
+    <ClCompile Include="ImgProgram.cpp" />
     <ClCompile Include="KeyPoint.cpp" />
     <ClCompile Include="IntMatrix.cpp" />
+    <ClCompile Include="KeyPointHelper.cpp" />
     <ClCompile Include="LabImage.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Pyramid.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Descriptor.h" />
+    <ClInclude Include="DescriptorExtractor.h" />
     <ClInclude Include="DoubleMatrix.h" />
+    <ClInclude Include="ImgProgram.h" />
     <ClInclude Include="KeyPoint.h" />
     <ClInclude Include="IntMatrix.h" />
+    <ClInclude Include="KeyPointHelper.h" />
     <ClInclude Include="LabImage.h" />
     <ClInclude Include="Pyramid.h" />
   </ItemGroup>

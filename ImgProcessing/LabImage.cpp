@@ -22,17 +22,17 @@ QImage LabImage::getGrayScale()
 
 void LabImage::drawKeyPoints(const std::vector<KeyPoint>& points, QColor color)
 {
-	QPainter paint(&sourceImage);
-	paint.setPen(color);
-	for (auto p : points) {
-		paint.drawEllipse(QPoint(p.x, p.y), 2, 2);
-	}
-	paint.end();
+	drawKeyPoints(sourceImage, points, color);
 }
 
 void LabImage::save(const QString& fileName)
 {
 	sourceImage.save(fileName);
+}
+
+DoubleMatrix LabImage::getDoubleMatrix()
+{
+	return IntMatrix::fromImage(getGrayScale()).toDoubleMatrix();
 }
 
 IntMatrix LabImage::createIntMatrixFromImage(QImage& source, char channel)
@@ -131,4 +131,78 @@ void LabImage::saveImage(DoubleMatrix& matrix, const QString& fileName)
 {
 	DoubleMatrix m = DoubleMatrix(matrix);
 	getImageFromMatrix(m.norm255()).save(fileName);
+}
+
+void LabImage::drawKeyPoints(QImage& img1, const std::vector<KeyPoint>& points, QColor color, int radius)
+{
+	QPainter paint(&img1);
+	paint.setPen(color);
+	for (auto p : points) {
+		paint.drawEllipse(QPoint(p.x, p.y), radius, radius);
+	}
+	paint.end();
+}
+
+void LabImage::drawKeyPoints(QImage& img1, const std::vector<KeyPoint>& points, std::vector<QColor>& colors, int radius)
+{
+	QPainter paint(&img1);
+	int iColor = 0;
+	for (auto p : points) {
+		paint.setPen(colors[iColor++]);
+		paint.drawEllipse(QPoint(p.x, p.y), radius, radius);
+	}
+}
+
+void LabImage::drawMatches(QImage& img, int offsetX, int offsetY, std::vector<std::pair<int, int>>& matches, const std::vector<KeyPoint>& a, const std::vector<KeyPoint>& b, const std::vector<QColor>& colors)
+{
+	QPainter painter(&img);
+	int iMatch = 0;
+	for (auto& m : matches) {
+		KeyPoint pointA = a[m.first];
+		KeyPoint pointB = b[m.second];
+
+		painter.setPen(colors[iMatch]);
+		painter.drawEllipse(QPoint(pointA.x, pointA.y), 3, 3);
+		painter.drawEllipse(QPoint(pointB.x + offsetX, pointB.y + offsetY), 3, 3);
+		painter.setPen(QPen(colors[iMatch], 2));
+		painter.drawLine(pointA.x, pointA.y, pointB.x + offsetX, pointB.y + offsetY);
+		iMatch++;
+	}
+}
+
+QImage LabImage::joinImages(QImage& img1, QImage& img2, int axis)
+{
+	int resultWidth = 0;
+	int resultHeight = 0;
+	int img2OffsetX = 0;
+	int img2OffsetY = 0;
+	if (axis == 1) {
+		resultWidth = img1.width() + img2.width();
+		resultHeight = std::max(img1.height(), img2.height());
+		img2OffsetX = img1.width();
+	}
+	else if (axis == 0) {
+		resultHeight = img1.height() + img2.height();
+		resultWidth = std::max(img1.width(), img2.width());
+		img2OffsetY = img1.height();
+	}
+	QImage result(resultWidth, resultHeight, img1.format());
+	QPainter painter(&result);
+
+	painter.drawImage(0, 0 , img1);
+	painter.drawImage(img2OffsetX, img2OffsetY, img2);
+
+	return result;
+}
+
+std::vector<QColor> LabImage::getRandomColors(int count)
+{
+	std::vector<QColor> colors;
+	float currentHue = 0.0;
+	for (int i = 0; i < count; i++) {
+		colors.push_back(QColor::fromHslF(currentHue, 0.7, 0.5));
+		currentHue += 0.618033988749895f;
+		currentHue = std::fmod(currentHue, 1.0f);
+	}
+	return colors;
 }
