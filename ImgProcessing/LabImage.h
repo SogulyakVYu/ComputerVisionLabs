@@ -35,6 +35,7 @@ public:
 
 	static void drawKeyPoints(QImage& img1, const std::vector<KeyPoint>& points, QColor color, int radius = 2);
 	static void drawKeyPoints(QImage& img1, const std::vector<KeyPoint>& points, std::vector<QColor>& colors, int radius = 2);
+	static void drawKeyPointAngle(QImage& img1, const std::vector<KeyPoint>& points, QColor color);
 	static void drawMatches(QImage& img, int offsetX, int offsetY, std::vector<std::pair<int, int>>& matches, const std::vector<KeyPoint>& a, const std::vector<KeyPoint>& b, const std::vector<QColor>& colors);
 	static QImage joinImages(QImage& img1, QImage& img2, int axis = 1);
 	static std::vector<QColor> getRandomColors(int count);

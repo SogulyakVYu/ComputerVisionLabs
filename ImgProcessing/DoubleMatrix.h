@@ -1,5 +1,6 @@
 #pragma once
 #include <vector>
+#include <functional>
 class DoubleMatrix
 {
 public:
@@ -116,6 +117,8 @@ public:
 	// Уменьшает размер изображения в два раза
 	DoubleMatrix downsample(int pow = 1);
 	void printMatrix() const;
+
+	void sort(std::function<bool(double, double)> comp) { std::sort(begin(matrix), end(matrix), comp); }
 
 	DoubleMatrix& norm1() { return normalize(0, 1); }
 	DoubleMatrix& norm255() { return normalize(0, 255); }

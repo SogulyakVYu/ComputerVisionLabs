@@ -137,8 +137,15 @@ void LabImage::drawKeyPoints(QImage& img1, const std::vector<KeyPoint>& points, 
 {
 	QPainter paint(&img1);
 	paint.setPen(color);
-	for (auto p : points) {
-		paint.drawEllipse(QPoint(p.x, p.y), radius, radius);
+	if (radius == 0) {
+		for (auto p : points) {
+			paint.drawPoint(p.x, p.y);
+		}
+	}
+	else {
+		for (auto p : points) {
+			paint.drawEllipse(QPoint(p.x, p.y), radius, radius);
+		}
 	}
 	paint.end();
 }
@@ -150,6 +157,19 @@ void LabImage::drawKeyPoints(QImage& img1, const std::vector<KeyPoint>& points, 
 	for (auto p : points) {
 		paint.setPen(colors[iColor++]);
 		paint.drawEllipse(QPoint(p.x, p.y), radius, radius);
+	}
+}
+
+void LabImage::drawKeyPointAngle(QImage& img1, const std::vector<KeyPoint>& points, QColor color)
+{
+	QPainter painter(&img1);
+	for (auto& p : points) {
+		double deg = p.angle * 180 / M_PI;
+		QLineF l;
+		l.setP1(QPointF(p.x, p.y));
+		l.setAngle(deg);
+		l.setLength(20);
+		painter.drawLine(l);
 	}
 }
 

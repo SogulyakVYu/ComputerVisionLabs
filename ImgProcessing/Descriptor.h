@@ -35,7 +35,7 @@ public:
 
 	double& at(int histogram, int bin) { return values[histogram * getBinCount() + bin]; }
 	const double& at(int histogram, int bin) const { return values.at(histogram, bin); }
-	const DoubleMatrix& vals(){ return values; }
+	DoubleMatrix& vals() { return values; }
 
 	void set(int h, int b, double val);
 	double length() const;

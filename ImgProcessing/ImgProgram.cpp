@@ -153,7 +153,10 @@ void ImgProgram::processDescriptorOption(DoubleMatrix& source1, DoubleMatrix sou
 		kp2 = KeyPointHelper::anms(kp2, pointCount);
 	}
 
+
 	DescriptorExtractor extractor(gridSize, cellCount, binCount);
+	kp = extractor.calcPointsOrientation(workImg, kp);
+	kp2 = extractor.calcPointsOrientation(workImg2, kp2);
 	std::vector<Descriptor> ds = extractor.compute(workImg, kp);
 	std::vector<Descriptor> ds2 = extractor.compute(workImg2, kp2);
 
@@ -167,6 +170,7 @@ void ImgProgram::processDescriptorOption(DoubleMatrix& source1, DoubleMatrix sou
 	QImage secondCopy = LabImage::getImageFromMatrix(source2.norm255());
 
 	std::vector<QColor> colors = LabImage::getRandomColors(kp.size());
+
 	LabImage::drawKeyPoints(mainCopy, kp, Qt::red, 3);
 	LabImage::drawKeyPoints(secondCopy, kp2, Qt::red, 3);
 	QImage resultImg = LabImage::joinImages(mainCopy, secondCopy);
@@ -261,7 +265,7 @@ void ImgProgram::processOptions()
 	IntMatrix intFirstImg = IntMatrix::fromImage(labFirstImage.getGrayScale());
 	DoubleMatrix doubleFirstImg = intFirstImg.toDoubleMatrix();
 	if (isSet(showInfoOption)) {
-		std::cout << "File: " << sourceFilesInfo[0].fileName().toStdString() << " ";
+		std::cout << sourceFilesInfo[0].fileName().toStdString() << " ";
 		labFirstImage.printInfo();
 	}
 
@@ -273,7 +277,7 @@ void ImgProgram::processOptions()
 		LabImage labSecondImage(img);
 		doubleSecondImg = labSecondImage.getDoubleMatrix();
 		if (isSet(showInfoOption)) {
-			std::cout << "Second File: " << sourceFilesInfo[1].fileName().toStdString() << " ";
+			std::cout << sourceFilesInfo[1].fileName().toStdString() << " ";
 			labSecondImage.printInfo();
 		}
 
