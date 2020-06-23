@@ -18,6 +18,7 @@ private:
 	QCommandLineOption anmsOption;
 	QCommandLineOption descriptorOption;
 	QCommandLineOption thresholdOption;
+	QCommandLineOption savePyramidsOption;
 
 	QStringList posArgs;
 	QString applicationDirPath;
@@ -32,6 +33,11 @@ private:
 	void processMoravecAndHarrisOption(DoubleMatrix& source);
 	void callCornerDetectorMethod(char method, DoubleMatrix& source, DoubleMatrix& img, std::vector<double> params, int pointCount);
 	void processDescriptorOption(DoubleMatrix& source1, DoubleMatrix source2);
+
+	void processLab6Option(DoubleMatrix& source1, DoubleMatrix& source2);
+
+	double getThreshold(double dflt = 0.6);
+
 	template<typename T>
 	static void printValues(const std::vector<std::string>& text, const std::vector<T>& values);
 

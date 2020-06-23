@@ -51,7 +51,7 @@ void ImgProgram::processPyramidOption(DoubleMatrix& source)
 
 void ImgProgram::processMoravecAndHarrisOption(DoubleMatrix& source)
 {
-	if (isSet(descriptorOption)) {
+	if (isSet(descriptorOption) || isSet(pyramidOption)) {
 		return;
 	}
 	DoubleMatrix workImg(source);
@@ -179,6 +179,60 @@ void ImgProgram::processDescriptorOption(DoubleMatrix& source1, DoubleMatrix sou
 	resultImg.save("match-" + sourceFilesInfo[0].baseName() + "-" + sourceFilesInfo[1].baseName() + ".png");
 }
 
+void ImgProgram::processLab6Option(DoubleMatrix& source1, DoubleMatrix& source2) {
+
+	if (parser.isSet(pyramidOption)) {
+		std::vector<double> pyramidVals = parseDoubleVector(parser.value(pyramidOption), ";");
+		std::vector<double> harrisVals{ 0.002, 5};
+		if (isSet(harrisDetectorOption)) {
+			harrisVals = parseDoubleVector(value(harrisDetectorOption), ";");
+		}
+
+		if (pyramidVals.size() == 4) {
+			auto pyramid1 = Pyramid::createWithOverlap(source1, pyramidVals[0], pyramidVals[1], pyramidVals[2], pyramidVals[3], 2);
+			auto pyramid2 = Pyramid::createWithOverlap(source2, pyramidVals[0], pyramidVals[1], pyramidVals[2], pyramidVals[3], 2);
+			auto doG1 = pyramid1.createDoGPyramid();
+			auto doG2 = pyramid2.createDoGPyramid();
+			auto extreme1 = KeyPointHelper::findExtremePoints(pyramid1, doG1, harrisVals[0], harrisVals[1]);
+			auto extreme2 = KeyPointHelper::findExtremePoints(pyramid2, doG2, harrisVals[0], harrisVals[1]);
+			DescriptorExtractor extractor(1, 1, 1);
+			// Точки и их дескрипторы первого изображения
+			auto result1 = extractor.computeScale(pyramid1, extreme1);
+			// Точки и их дескрипторы второго изображения
+			auto result2 = extractor.computeScale(pyramid2, extreme2);
+			auto kp1 = result1.first;
+			auto kp2 = result2.first;
+			auto matches = DescriptorExtractor::findMatches(result1.second, result2.second, getThreshold(0.8));
+			
+			QImage copy1 = LabImage::getImageFromMatrix(source1.norm255());
+			QImage copy2 = LabImage::getImageFromMatrix(source2.norm255());
+
+			std::vector<QColor> colors = LabImage::getRandomColors(std::max((size_t)500, kp1.size()));
+			LabImage::drawKeyPoints(copy1, kp1, Qt::red, 3);
+			LabImage::drawKeyPoints(copy2, kp2, Qt::green, 3);
+			QImage resultImg = LabImage::joinImages(copy1, copy2);
+			LabImage::drawMatches(resultImg, copy1.width(), 0, matches, kp1, kp2, colors);
+			resultImg.save(applicationDirPath + "\\match-" + sourceFilesInfo[0].baseName() + "-" + sourceFilesInfo[1].baseName() + ".png");
+
+			if (isSet(savePyramidsOption)) {
+				doG1.saveImage(applicationDirPath + "\\DoG1");
+				doG2.saveImage(applicationDirPath + "\\DoG2");
+				pyramid1.saveImage(applicationDirPath + "\\pyramid1");
+				pyramid2.saveImage(applicationDirPath + "\\pyramid2");
+			}
+		}
+		else {
+			std::cout << "--pyramid arguments is incorrect: " << parser.value(pyramidOption).toStdString() << std::endl;
+		}
+	}
+}
+
+double ImgProgram::getThreshold(double dflt)
+{
+	if (isSet(thresholdOption)) return parseDoubleOrDefault(value(thresholdOption), dflt);
+	return dflt;
+}
+
 int ImgProgram::parseIntOrDefault(const QString& line, int dflt)
 {
 	bool isInt = false;
@@ -220,7 +274,8 @@ ImgProgram::ImgProgram(QCommandLineParser& parser) :
 	harrisDetectorOption("harris", "Harris corner detector 'winSize;localMaxWinSize;threshold", "harrisVal"),
 	anmsOption("anms", "ANMS filter ", "anmsVal"),
 	descriptorOption("descriptor", "Simple Descriptor 'gridSize;cellCount;binCount", "descriptorVal"),
-	thresholdOption("t", "Threshold for some methods", "thresholdVal")
+	thresholdOption("t", "Threshold for some methods", "thresholdVal"),
+	savePyramidsOption("save-pyramid", "Save images from Gauss pyramid and DoG")
 {
 	parser.addHelpOption();
 	parser.addPositionalArgument("source", "Source Image(images)");
@@ -236,6 +291,7 @@ ImgProgram::ImgProgram(QCommandLineParser& parser) :
 	parser.addOption(anmsOption);
 	parser.addOption(descriptorOption);
 	parser.addOption(thresholdOption);
+	parser.addOption(savePyramidsOption);
 }
 
 void ImgProgram::processParser(const QCoreApplication& app)
@@ -289,9 +345,10 @@ void ImgProgram::processOptions()
 	auto startTime = chronoClock::now();
 
 	processLab1Option(doubleFirstImg);
-	processPyramidOption(doubleFirstImg);
+	//processPyramidOption(doubleFirstImg);
 	processMoravecAndHarrisOption(doubleFirstImg);
 	processDescriptorOption(doubleFirstImg, doubleSecondImg);
+	processLab6Option(doubleFirstImg, doubleSecondImg);
 
 	auto endTime = chronoClock::now();
 	auto deltaTime = std::chrono::duration_cast<chronoMs>(endTime - startTime);

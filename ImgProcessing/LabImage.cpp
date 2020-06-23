@@ -140,6 +140,8 @@ void LabImage::drawKeyPoints(QImage& img1, const std::vector<KeyPoint>& points, 
 	if (radius == 0) {
 		for (auto p : points) {
 			paint.drawPoint(p.x, p.y);
+			double radius = p.sigma * sqrt(2);
+			paint.drawEllipse(QPointF(p.x, p.y), radius, radius);
 		}
 	}
 	else {
@@ -181,9 +183,10 @@ void LabImage::drawMatches(QImage& img, int offsetX, int offsetY, std::vector<st
 		KeyPoint pointA = a[m.first];
 		KeyPoint pointB = b[m.second];
 
+		double r1 = 3, r2 = 3;
 		painter.setPen(colors[iMatch]);
-		painter.drawEllipse(QPoint(pointA.x, pointA.y), 3, 3);
-		painter.drawEllipse(QPoint(pointB.x + offsetX, pointB.y + offsetY), 3, 3);
+		painter.drawEllipse(QPointF(pointA.x, pointA.y), r1, r1);
+		painter.drawEllipse(QPointF(pointB.x + offsetX, pointB.y + offsetY), r2, r2);
 		painter.setPen(QPen(colors[iMatch], 2));
 		painter.drawLine(pointA.x, pointA.y, pointB.x + offsetX, pointB.y + offsetY);
 		iMatch++;

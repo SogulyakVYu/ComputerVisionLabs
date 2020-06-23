@@ -19,28 +19,28 @@ std::pair<int, int> DescriptorExtractor::getBinsIndexies(double phi, double binS
 }
 
 DescriptorExtractor::DescriptorExtractor(int gridSize, int cellCount, int histogramCount, int binCount):
-	gridSize(gridSize), cellCount(cellCount), cellSize(gridSize/cellCount), histogramCount(histogramCount), binCount(binCount) {}
+	extractorGridSize(gridSize), extractorCellCount(cellCount), extractorCellSize(gridSize/cellCount), extractorHistogramCount(histogramCount), extractorBinCount(binCount) {}
 
 DescriptorExtractor::DescriptorExtractor(int gridSize, int cellCount, int binCount) :
-	gridSize(gridSize), cellCount(cellCount), cellSize(gridSize / cellCount), histogramCount(cellCount * cellCount), binCount(binCount) {}
+	extractorGridSize(gridSize), extractorCellCount(cellCount), extractorCellSize(gridSize / cellCount), extractorHistogramCount(cellCount * cellCount), extractorBinCount(binCount) {}
 
 void DescriptorExtractor::fillDescriptor(Descriptor& descriptor, const DoubleMatrix& dirs, const DoubleMatrix& grad, KeyPoint& point)
 {
-	int radius = gridSize / 2;
-	double binSize = 2 * M_PI / binCount;
-	DoubleMatrix gauss = DoubleMatrix::createGaussian(gridSize + 1, gridSize + 1, gridSize / 6.);
+	int radius = extractorGridSize / 2;
+	double binSize = 2 * M_PI / extractorBinCount;
+	DoubleMatrix gauss = DoubleMatrix::createGaussian(extractorGridSize + 1, extractorGridSize + 1, extractorGridSize / 6.);
 
 	for (int i = -radius; i < radius; i++) {
 		for (int j = -radius; j < radius; j++) {
 			double phi = dirs.get(point.y + i, point.x + j);
 
-			std::pair<int, int> binsIndex = getBinsIndexies(phi, binSize, binCount);
+			std::pair<int, int> binsIndex = getBinsIndexies(phi, binSize, extractorBinCount);
 			double bin1Center = binsIndex.first * binSize + binSize / 2;
 			double distToBin1Center = abs(bin1Center - phi);
 			double distToBin2Center = binSize - distToBin1Center;
 			int ii = i + radius;
 			int jj = j + radius;
-			int curHistogram = (ii / cellSize) * cellCount + (jj / cellSize);
+			int curHistogram = (ii / extractorCellSize) * extractorCellCount + (jj / extractorCellSize);
 			double gradVal = grad.get(point.y + i, point.x + j);
 			descriptor.at(curHistogram, binsIndex.first) += gradVal * (1 - distToBin1Center / binSize) * gauss.at(ii, jj);
 			descriptor.at(curHistogram, binsIndex.second) += gradVal * (1 - distToBin2Center / binSize) * gauss.at(ii, jj);
@@ -55,7 +55,7 @@ std::vector<Descriptor> DescriptorExtractor::compute(const DoubleMatrix& img, st
 	std::vector<Descriptor> descriptors;
 	gridPoints.clear();
 	for (int i = 0; i < points.size(); i++) {
-		descriptors.push_back(Descriptor(gridSize, cellCount, binCount));
+		descriptors.push_back(Descriptor(extractorGridSize, extractorCellCount, extractorBinCount));
 		fillDescriptorAngle(descriptors[i], gradientDirs, gradient, points[i]);
 		descriptors[i].normalize();
 		descriptors[i].truncate(0.2);
@@ -67,6 +67,10 @@ std::vector<Descriptor> DescriptorExtractor::compute(const DoubleMatrix& img, st
 
 void DescriptorExtractor::fillDescriptorAngle(Descriptor& descriptor, const DoubleMatrix& dirs, const DoubleMatrix& grad, KeyPoint& point)
 {
+	int gridSize = descriptor.getGridSize();
+	int cellSize = descriptor.getCellSize();
+	int cellCount = descriptor.getCellCount();
+	int binCount = descriptor.getBinCount();
 	int radius = gridSize / 2;
 	double binSize = 2 * M_PI / binCount;
 	double twoPi = 2 * M_PI;
@@ -74,19 +78,16 @@ void DescriptorExtractor::fillDescriptorAngle(Descriptor& descriptor, const Doub
 
 	for (int y = -radius; y < radius; y++) {
 		for (int x = -radius; x < radius; x++) {
-			double x1 = x * cos(point.angle) + y * sin(point.angle) + 0.5;
-			double y1 = y * cos(point.angle) - x * sin(point.angle) + 0.5;
+			double x1 = x * cos(point.angle) - y * sin(point.angle);
+			double y1 = y * cos(point.angle) + x * sin(point.angle);
+			x1 = std::round(x1);
+			y1 = std::round(y1);
 
 			if (y == -radius || x == -radius || y == radius - 1 || x == radius - 1) {
 				gridPoints.push_back(KeyPoint(point.x + x1, point.y + y1, 0, point.angle));
 			}
-
-			if (y1 < -radius) y1 = -radius;
-			else if (y1 > radius - 1) y1 = radius - 1;
-			if (x1 < -radius) x1 = -radius;
-			else if (x1 > radius - 1) x1 = radius - 1;
 			
-			double phi = dirs.get(point.y + y, point.x + x);
+			double phi = dirs.get(point.y + y1, point.x + x1);
 			phi = phi - point.angle;
 			phi = phi < 0 ? phi + twoPi : phi;
 			phi = phi > twoPi ? phi - twoPi : phi;
@@ -95,12 +96,52 @@ void DescriptorExtractor::fillDescriptorAngle(Descriptor& descriptor, const Doub
 			double bin1Center = binsIndex.first * binSize + binSize / 2;
 			double distToBin1Center = abs(bin1Center - phi);
 			double distToBin2Center = binSize - distToBin1Center;
-			int iHist = y1 + radius;
-			int jHist = x1 + radius;
+			int iHist = y + radius;
+			int jHist = x + radius;
 			int curHistogram = (iHist / cellSize) * cellCount + (jHist / cellSize);
-			double gradVal = grad.get(point.y + y, point.x + x);
+			double gradVal = grad.get(point.y + y1, point.x + x1);
 			descriptor.at(curHistogram, binsIndex.first) += gradVal * (1 - distToBin1Center / binSize) * gauss.at(iHist, jHist);
 			descriptor.at(curHistogram, binsIndex.second) += gradVal * (1 - distToBin2Center / binSize) * gauss.at(iHist, jHist);
+		}
+	}
+}
+
+void DescriptorExtractor::fillDescriptorScale(Descriptor& descriptor, const DoubleMatrix& dirs, const DoubleMatrix& grad, KeyPoint& point)
+{
+	int gridSize = descriptor.getGridSize();
+	double cellSize = descriptor.getCellSize();
+	int cellCount = descriptor.getCellCount();
+	int binCount = descriptor.getBinCount();
+	double radius = gridSize / 2.;
+	double binSize = 2 * M_PI / binCount;
+	double twoPi = 2 * M_PI;
+	int gaussSize = gridSize % 2 == 0 ? gridSize + 1 : gridSize;
+	DoubleMatrix gauss = DoubleMatrix::createGaussian(gaussSize, gaussSize, 0.5 * gridSize);
+
+	for (double y = -radius; y < radius; y++) {
+		for (double x = -radius; x < radius; x++) {
+			double x1 = x * cos(point.angle) - y * sin(point.angle);
+			double y1 = y * cos(point.angle) + x * sin(point.angle);
+			x1 = std::round(x1);
+			y1 = std::round(y1);
+
+			double phi = dirs.get(point.y + y1, point.x + x1);
+			phi = phi - point.angle;
+			phi = phi < 0 ? phi + twoPi : phi;
+			phi = phi > twoPi ? phi - twoPi : phi;
+
+			std::pair<int, int> binsIndex = getBinsIndexies(phi, binSize, binCount);
+			double bin1Center = binsIndex.first * binSize + binSize / 2;
+			double distToBin1Center = abs(bin1Center - phi);
+			double distToBin2Center = binSize - distToBin1Center;
+			int i = std::round(y + radius);
+			int j = std::round(x + radius);
+			double yHist = i / cellSize;
+			double xHist = j / cellSize;
+			int curHistogram = (int)yHist * cellCount + (int)xHist;
+			double gradVal = grad.get(point.y + y1, point.x + x1);
+			descriptor.at(curHistogram, binsIndex.first) += gradVal * (1 - distToBin1Center / binSize) * gauss.at(i, j);
+			descriptor.at(curHistogram, binsIndex.second) += gradVal * (1 - distToBin2Center / binSize) * gauss.at(i, j);
 		}
 	}
 }
@@ -108,25 +149,57 @@ void DescriptorExtractor::fillDescriptorAngle(Descriptor& descriptor, const Doub
 void DescriptorExtractor::calcOrientationHistogram(Descriptor& descriptor, const DoubleMatrix& dirs, const DoubleMatrix& grad, KeyPoint& point)
 {
 	int bins = descriptor.getBinCount();
-	int radius = gridSize / 2;
+	int gridSize = descriptor.getGridSize();
+	double radius = gridSize / 2.;
 	double binSize = 2 * M_PI / bins;
-	DoubleMatrix gauss = DoubleMatrix::createGaussian(gridSize + 1, gridSize + 1, 1.5);
+	int gaussSize = gridSize % 2 == 0 ? gridSize + 1 : gridSize;
+	DoubleMatrix gauss = DoubleMatrix::createGaussian(gaussSize, gaussSize, 1.5 * (point.sigma == 0.0 ? 1 : point.sigma));
 
-	for (int i = -radius; i < radius; i++) {
-		for (int j = -radius; j < radius; j++) {
-			double dist = sqrt(i * i + j * j);
+	for (double i = -radius; i < radius; i++) {
+		for (double j = -radius; j < radius; j++) {
 			double phi = dirs.get(point.y + i, point.x + j);
 
 			std::pair<int, int> binsIndex = getBinsIndexies(phi, binSize, bins);
 			double bin1Center = binsIndex.first * binSize + binSize / 2;
 			double distToBin1Center = abs(bin1Center - phi);
 			double distToBin2Center = binSize - distToBin1Center;
-			int ii = i + radius;
-			int jj = j + radius;
+			int ii = std::round(i + radius);
+			int jj = std::round(j + radius);
 			double gradVal = grad.get(point.y + i, point.x + j);
 			descriptor.at(0, binsIndex.first) += gradVal * (1 - distToBin1Center / binSize) * gauss.at(ii, jj);
 			descriptor.at(0, binsIndex.second) += gradVal * (1 - distToBin2Center / binSize) * gauss.at(ii, jj);
 		}
+	}
+}
+
+void DescriptorExtractor::addPointWithPeaks(KeyPoint& point, Descriptor& descriptor, std::vector<KeyPoint>& out, int bins) 
+{
+	int count = descriptor.vals().getSize();
+	int maxIndex = -1;
+	int secondMaxIndex = -1;
+	double maxEl = std::numeric_limits<double>::min();
+	double secondMaxEl = std::numeric_limits<double>::min();
+	for (int i = 0; i < count; i++) {
+		double v = descriptor.vals()[i];
+		if (v > maxEl) {
+			secondMaxEl = maxEl;
+			secondMaxIndex = maxIndex;
+			maxEl = v;
+			maxIndex = i;
+		}
+		else if (v > secondMaxEl) {
+			secondMaxEl = v;
+			secondMaxIndex = i;
+		}
+	}
+
+	KeyPoint p1(point);
+	p1.angle = maxIndex * (2 * M_PI / bins);
+	out.push_back(p1);
+	if (secondMaxEl >= 0.8 * maxEl) {
+		KeyPoint p2(point);
+		p2.angle = secondMaxIndex * (2 * M_PI / bins);
+		out.push_back(p2);
 	}
 }
 
@@ -135,44 +208,74 @@ std::vector<KeyPoint> DescriptorExtractor::calcPointsOrientation(const DoubleMat
 	DoubleMatrix gradient = img.calcSobel();
 	DoubleMatrix gradientDirs = img.gradientDirection();
 	std::vector<Descriptor> descriptors;
+	int gridSize = 16;
 	int radius = gridSize / 2;
 
 	std::vector<KeyPoint> result;
 	for (int ip = 0; ip < points.size(); ip++) {
-		descriptors.push_back(Descriptor(1, bins));
+		descriptors.push_back(Descriptor(gridSize, 1, bins));
 		calcOrientationHistogram(descriptors[ip], gradientDirs, gradient, points[ip]);
-		//descriptors[ip].vals().sort([&](double a, double b) { return a > b; });
-
-		int count = descriptors[ip].vals().getSize();
-		int maxIndex = -1;
-		int secondMaxIndex = -1;
-		double maxEl = std::numeric_limits<double>::min();
-		double secondMaxEl = std::numeric_limits<double>::min();
-		for (int i = 0; i < count; i++) {
-			double v = descriptors[ip].vals()[i];
-			if (v > maxEl) {
-				secondMaxEl = maxEl;
-				secondMaxIndex = maxIndex;
-				maxEl = v;
-				maxIndex = i;
-			}
-			else if (v > secondMaxEl) {
-				secondMaxEl = v;
-				secondMaxIndex = i;
-			}
-		}
-
-		KeyPoint p1(points[ip]);
-		p1.angle = maxIndex * (2 * M_PI / bins);
-		result.push_back(p1);
-		if (secondMaxEl >= 0.8 * maxEl) {
-			KeyPoint p2(points[ip]);
-			p2.angle = secondMaxIndex * (2 * M_PI / bins);
-			result.push_back(p2);
-		}
+		addPointWithPeaks(points[ip], descriptors[ip], result, bins);
 	}
 
 	return result;
+}
+
+std::pair<std::vector<KeyPoint>, std::vector<Descriptor>>  DescriptorExtractor::computeScale(Pyramid& pyramid, std::vector<KeyPoint>& points)
+{
+	std::vector<KeyPoint> orientPoints;
+	std::vector<Descriptor> descriptors;
+	std::vector<KeyPoint> resultPoints;
+
+	int cellCount = 4;
+	int binCount = 8;
+	int octaveCount = pyramid.getOctaveCount();
+	int levelCount = pyramid.getLevelCount();
+	int overlap = pyramid.getOverlapCount();
+	Pyramid gradients = pyramid.createGradientPyramid();
+	Pyramid directions = pyramid.createDirectionsPyramid();
+
+	int bins = 36; 
+	// Определение ориентации точки
+	for (int iOctave = 0; iOctave < octaveCount; iOctave++) {
+		double firstSigma = pyramid.get(iOctave, 0).sigmaEffective;
+		double lastSigma = pyramid.get(iOctave, levelCount - overlap - 1).sigmaEffective;
+		for (KeyPoint& point : points) {
+			if (firstSigma < point.sigma && point.sigma <= lastSigma) {
+				int gridSize = std::round(16 * point.sigma / firstSigma);
+				Descriptor d(gridSize, 1, bins);
+				PyramidRow& dirs = directions.getBySigma(iOctave, point.sigma);
+				PyramidRow& grads = gradients.getBySigma(iOctave, point.sigma);
+				calcOrientationHistogram(d, dirs.image, grads.image, point);
+				addPointWithPeaks(point, d, orientPoints, bins);
+			}
+		}
+	}
+
+	// Заполнение дескрипторов
+	for (int iOctave = 0; iOctave < octaveCount; iOctave++) {
+		double firstSigma = pyramid.get(iOctave, 0).sigmaEffective;
+		double lastSigma = pyramid.get(iOctave, levelCount - overlap - 1).sigmaEffective;
+		for (KeyPoint& point : orientPoints) {
+			if (firstSigma < point.sigma && point.sigma <= lastSigma) {
+				int gridSize = std::round(16 * point.sigma / firstSigma);
+				Descriptor d(gridSize, cellCount, binCount);
+				PyramidRow& dirs = directions.getBySigma(iOctave, point.sigma);
+				PyramidRow& grads = gradients.getBySigma(iOctave, point.sigma);
+				fillDescriptorScale(d, dirs.image, grads.image, point);
+				descriptors.push_back(d);
+				// Местоположение точки на изначальном изображении
+				KeyPoint scalePoint(point);
+				int scale = std::pow(2, iOctave);
+				scalePoint.x *= scale;
+				scalePoint.y *= scale;
+				resultPoints.push_back(scalePoint);
+			}
+		}
+	}
+	qDebug() << "Proccessed points:" << resultPoints.size();
+
+	return std::make_pair(resultPoints, descriptors);
 }
 
 std::vector<std::pair<int, int>> DescriptorExtractor::findMatches(std::vector<Descriptor> aDescriptors, std::vector<Descriptor> bDescriptors, double threshold)
@@ -206,6 +309,8 @@ std::vector<std::pair<int, int>> DescriptorExtractor::findMatches(std::vector<De
 			result.push_back(std::make_pair(i, distances[i][0].second));
 		}
 	}
+
+	qDebug() << "Matches found: " << result.size();
 
 	return result;
 }

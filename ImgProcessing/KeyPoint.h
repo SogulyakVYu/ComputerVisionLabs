@@ -6,8 +6,10 @@ class KeyPoint
 private:
 public:
 	int x, y;
+	double sigma;
 	double f;
 	double angle;
+	KeyPoint(int x, int y, double f, double angle, double sigma);
 	KeyPoint(int x, int y, double f, double angle);
 	KeyPoint(int x, int y, double f);
 	KeyPoint(int x, int y); 

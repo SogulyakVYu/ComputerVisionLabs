@@ -1,4 +1,7 @@
 #include <algorithm>
+#include <set>
+#include <unordered_map>
+#include <QtCore/qdebug.h>
 #include "KeyPointHelper.h"
 
 std::vector<KeyPoint> KeyPointHelper::anms(std::vector<KeyPoint>& points, int pointsCount, double minR, double maxR)
@@ -92,4 +95,38 @@ std::vector<KeyPoint> KeyPointHelper::getKeyPoints(const DoubleMatrix& img, doub
 		}
 	}
 	return output;
+}
+
+std::vector<KeyPoint> KeyPointHelper::findExtremePoints(Pyramid& pyramid, Pyramid& doG, double harrisThreshold, double harrisWindowSize)
+{
+	std::vector<KeyPoint> pointsDoG = doG.findExtremePoints(3, 0.03);
+	std::vector<KeyPoint> result;
+	
+	// Множество значений сигм
+	std::set<double> sigmas;
+
+	for(KeyPoint& point : pointsDoG)
+	{
+		sigmas.insert(point.sigma);
+	}
+
+	// Значения оператора Харриса по сигмам
+	std::unordered_map<double, DoubleMatrix> harrisImages;
+	for (double s : sigmas) {
+		PyramidRow& row = pyramid.getBySigma(s);
+		DoubleMatrix harrisImage = row.image.operatorHarris(harrisWindowSize);
+		harrisImages.insert({s, harrisImage});
+	}
+
+	// Отсечение экстремумов ниже порога
+	for (KeyPoint& point : pointsDoG) {
+		DoubleMatrix& img = harrisImages[point.sigma];
+		if (img.at(point.y, point.x) > harrisThreshold) {
+			result.push_back(point);
+		}
+	}
+
+	qDebug() << "ExtremePoints count:" << result.size();
+
+	return result;
 }
