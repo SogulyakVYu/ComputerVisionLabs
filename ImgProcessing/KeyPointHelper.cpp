@@ -1,5 +1,5 @@
 #include <algorithm>
-#include <set>
+#include <unordered_set>
 #include <unordered_map>
 #include <QtCore/qdebug.h>
 #include "KeyPointHelper.h"
@@ -103,7 +103,7 @@ std::vector<KeyPoint> KeyPointHelper::findExtremePoints(Pyramid& pyramid, Pyrami
 	std::vector<KeyPoint> result;
 	
 	// Множество значений сигм
-	std::set<double> sigmas;
+	std::unordered_set<double> sigmas;
 
 	for(KeyPoint& point : pointsDoG)
 	{

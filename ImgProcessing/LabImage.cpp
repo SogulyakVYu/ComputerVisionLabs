@@ -183,7 +183,7 @@ void LabImage::drawMatches(QImage& img, int offsetX, int offsetY, std::vector<st
 		KeyPoint pointA = a[m.first];
 		KeyPoint pointB = b[m.second];
 
-		double r1 = 3, r2 = 3;
+		double r1 = pointA.sigma * sqrt(2), r2 = pointB.sigma * sqrt(2);
 		painter.setPen(colors[iMatch]);
 		painter.drawEllipse(QPointF(pointA.x, pointA.y), r1, r1);
 		painter.drawEllipse(QPointF(pointB.x + offsetX, pointB.y + offsetY), r2, r2);

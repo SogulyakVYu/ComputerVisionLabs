@@ -18,6 +18,51 @@ std::pair<int, int> DescriptorExtractor::getBinsIndexies(double phi, double binS
 	return std::make_pair(indexBin1, indexBin2);
 }
 
+std::vector<std::pair<int, double>> DescriptorExtractor::getHistogramVals(Descriptor& d, double x, double y) 
+{
+	int gridSize = d.getGridSize();
+	double radius = gridSize / 2.;
+	int cellCount = d.getCellCount();
+	double cellSize = d.getCellSize();
+	int i = std::floor(y + radius);
+	int j = std::floor(x + radius);
+	double histRadius = cellSize / 2;
+	// Номер [x,y] гистограммы, в которой находится точка
+	int yHist = i / cellSize;
+	int xHist = j / cellSize;
+	// координаты центра гистограммы
+	double histCenterX = xHist * cellSize + histRadius;
+	double histCenterY = yHist * cellSize + histRadius;
+
+	// Смещение смежных гистограмм
+	int yHistOffset, xHistOffset;
+	if (y + radius < histCenterY) yHistOffset = -1;
+	else  yHistOffset = 1;
+	if (x + radius < histCenterX) xHistOffset = -1;
+	else xHistOffset = 1;
+	// Номера смежных гистограмм
+	std::vector<int> xhistIndexes = { xHist, xHist + xHistOffset };
+	std::vector<int> yhistIndexes = { yHist, yHist + yHistOffset };
+	double distClosestCenter = dist(x + radius, y + radius, histCenterX, histCenterY);
+	// Номера и веса для смежных гистограмм
+	std::vector<std::pair<int, double>> resultHistVals;
+	double r = sqrt(2 * cellSize * cellSize);
+	for (int yHistIndex : yhistIndexes) {
+		for (int xHistIndex : xhistIndexes) {
+			double xC = xHistIndex * cellSize + histRadius;
+			double yC = yHistIndex * cellSize + histRadius;
+			double distX = 1 - abs(x + radius - xC) / cellSize;
+			double distY = 1 - abs(y + radius - yC) / cellSize;
+			int curHistogram = (int)yHistIndex * cellCount + (int)xHistIndex;
+			if (xHistIndex >= 0 && xHistIndex < cellCount && yHistIndex >= 0 && yHistIndex < cellCount) {
+				resultHistVals.push_back({ curHistogram, distX * distY});
+			}
+		}
+	}
+
+	return resultHistVals;
+}
+
 DescriptorExtractor::DescriptorExtractor(int gridSize, int cellCount, int histogramCount, int binCount):
 	extractorGridSize(gridSize), extractorCellCount(cellCount), extractorCellSize(gridSize/cellCount), extractorHistogramCount(histogramCount), extractorBinCount(binCount) {}
 
@@ -134,14 +179,17 @@ void DescriptorExtractor::fillDescriptorScale(Descriptor& descriptor, const Doub
 			double bin1Center = binsIndex.first * binSize + binSize / 2;
 			double distToBin1Center = abs(bin1Center - phi);
 			double distToBin2Center = binSize - distToBin1Center;
-			int i = std::round(y + radius);
-			int j = std::round(x + radius);
-			double yHist = i / cellSize;
-			double xHist = j / cellSize;
-			int curHistogram = (int)yHist * cellCount + (int)xHist;
+			int i = std::floor(y + radius);
+			int j = std::floor(x + radius);
+			std::vector<std::pair<int, double>> resultHistVals = getHistogramVals(descriptor, x, y);
+
 			double gradVal = grad.get(point.y + y1, point.x + x1);
-			descriptor.at(curHistogram, binsIndex.first) += gradVal * (1 - distToBin1Center / binSize) * gauss.at(i, j);
-			descriptor.at(curHistogram, binsIndex.second) += gradVal * (1 - distToBin2Center / binSize) * gauss.at(i, j);
+			for (auto& val : resultHistVals) {
+				int curHistogram = val.first;
+				double w = val.second;
+				descriptor.at(curHistogram, binsIndex.first) += gradVal * (1 - distToBin1Center / binSize) * w * gauss.at(i, j);
+				descriptor.at(curHistogram, binsIndex.second) += gradVal * (1 - distToBin2Center / binSize) * w * gauss.at(i, j);
+			}
 		}
 	}
 }
@@ -263,6 +311,9 @@ std::pair<std::vector<KeyPoint>, std::vector<Descriptor>>  DescriptorExtractor::
 				PyramidRow& dirs = directions.getBySigma(iOctave, point.sigma);
 				PyramidRow& grads = gradients.getBySigma(iOctave, point.sigma);
 				fillDescriptorScale(d, dirs.image, grads.image, point);
+				d.normalize();
+				d.truncate(0.2);
+				d.normalize();
 				descriptors.push_back(d);
 				// Местоположение точки на изначальном изображении
 				KeyPoint scalePoint(point);

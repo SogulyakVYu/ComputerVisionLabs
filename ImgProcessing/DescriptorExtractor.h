@@ -31,6 +31,8 @@ private:
 	// Возвращает индексы корзин для указанного угла
 	static std::pair<int, int> getBinsIndexies(double phi, double binSize, int binCount);
 
+	static double dist(double x1, double y1, double x2, double y2) { return sqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1)); }
+	static std::vector<std::pair<int, double>> getHistogramVals(Descriptor& d, double x, double y);
 	std::vector<KeyPoint> gridPoints;
 public:
 	// Инициалзиция из размера сетки, числа ячеек в сетке, числа гистограмм и числа корзин в одной гистограмме
